@@ -260,6 +260,33 @@ export default function LiveEditor() {
     if (isCloudConfigured()) cloudDeleteRoute(id);
   }
 
+  // Change the number of waiting passengers at a stop (never below zero).
+  function changePassengers(id: number, delta: number) {
+    setStops((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const updated = {
+          ...s,
+          passengerCount: Math.max(0, s.passengerCount + delta),
+        };
+        if (isCloudConfigured()) cloudUpsertStop(updated);
+        return updated;
+      })
+    );
+  }
+
+  const busiestStopId = useMemo(() => {
+    let id = -1;
+    let max = 0;
+    for (const s of stops) {
+      if (s.passengerCount > max) {
+        max = s.passengerCount;
+        id = s.id;
+      }
+    }
+    return id;
+  }, [stops]);
+
   function stopName2(id: number): string {
     return stops.find((s) => s.id === id)?.englishName ?? "?";
   }
@@ -333,8 +360,15 @@ export default function LiveEditor() {
                           : "h-2.5 w-2.5 bg-slate-200 ring-slate-500"
                       }`}
                     />
-                    <span className="mt-0.5 block whitespace-nowrap rounded bg-ink-950/80 px-1 text-[9px] text-slate-200">
+                    <span
+                      className={`mt-0.5 block whitespace-nowrap rounded px-1 text-[9px] ${
+                        s.id === busiestStopId
+                          ? "bg-red-500/90 font-semibold text-white"
+                          : "bg-ink-950/80 text-slate-200"
+                      }`}
+                    >
                       {s.englishName}
+                      {s.passengerCount > 0 ? ` · ${s.passengerCount}` : ""}
                     </span>
                   </div>
                 );
@@ -610,13 +644,34 @@ export default function LiveEditor() {
                         key={s.id}
                         className="flex items-center justify-between text-xs text-slate-300"
                       >
-                        <span>{s.englishName}</span>
-                        <button
-                          onClick={() => deleteStop(s.id)}
-                          className="rounded border border-red-400/40 px-2 py-0.5 text-red-300"
-                        >
-                          Delete
-                        </button>
+                        <span>
+                          {s.englishName}{" "}
+                          <span className="text-slate-500">
+                            ({s.passengerCount})
+                          </span>
+                        </span>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => changePassengers(s.id, 1)}
+                            className="rounded border border-slate-600 px-2 py-0.5 text-slate-300"
+                            title="Add a waiting passenger"
+                          >
+                            +
+                          </button>
+                          <button
+                            onClick={() => changePassengers(s.id, -1)}
+                            className="rounded border border-slate-600 px-2 py-0.5 text-slate-300"
+                            title="Remove a waiting passenger"
+                          >
+                            &minus;
+                          </button>
+                          <button
+                            onClick={() => deleteStop(s.id)}
+                            className="rounded border border-red-400/40 px-2 py-0.5 text-red-300"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
