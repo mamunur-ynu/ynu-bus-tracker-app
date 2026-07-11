@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import QRCode from "qrcode";
 import Card from "./Card";
 import type { Stop, Route } from "../data/campusData";
 import { findShortestRoute } from "../algorithms/dijkstra";
@@ -287,6 +288,25 @@ export default function LiveEditor() {
     return id;
   }, [stops]);
 
+  // QR code: pick a stop and show a QR that opens this app focused on it.
+  const [qrStopId, setQrStopId] = useState<number>(stops[0]?.id ?? 1);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  useEffect(() => {
+    const origin = window.location.origin;
+    const url = `${origin}/?to=${qrStopId}`;
+    QRCode.toDataURL(url, { width: 220, margin: 1 })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(""));
+  }, [qrStopId]);
+
+  // On first load, if the URL has ?to=<id>, set the destination to that stop.
+  useEffect(() => {
+    const to = new URLSearchParams(window.location.search).get("to");
+    const id = to ? Number(to) : NaN;
+    if (!Number.isNaN(id)) setDst(id);
+  }, []);
+
   function stopName2(id: number): string {
     return stops.find((s) => s.id === id)?.englishName ?? "?";
   }
@@ -445,6 +465,37 @@ export default function LiveEditor() {
                   {busRunning ? "Stop bus" : "Run bus along this route"}
                 </button>
               )}
+            </div>
+
+            <div className="mt-4 rounded-xl border border-slate-700/50 bg-ink-950/40 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-200">
+                    Stop QR code
+                  </p>
+                  <p className="mb-2 text-xs text-slate-400">
+                    Scan with a phone to open the route to this stop.
+                  </p>
+                  <select
+                    className={input}
+                    value={qrStopId}
+                    onChange={(e) => setQrStopId(Number(e.target.value))}
+                  >
+                    {stops.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.englishName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {qrDataUrl && (
+                  <img
+                    src={qrDataUrl}
+                    alt="QR code for the selected stop"
+                    className="h-28 w-28 rounded bg-white p-1"
+                  />
+                )}
+              </div>
             </div>
           </div>
 
