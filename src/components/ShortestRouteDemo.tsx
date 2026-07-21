@@ -138,36 +138,23 @@ export default function ShortestRouteDemo() {
             </p>
             <p className="mt-1 text-sm font-medium text-white">{pathText}</p>
             {result.found && (
-              <>
-                <p className="mt-2 text-sm text-slate-400">
-                  From {stopName(sourceId)} ({stopChinese(sourceId)}) to{" "}
-                  {stopName(destId)} ({stopChinese(destId)})
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <p className="text-sm text-slate-400">
+                  {stopName(sourceId)}{" "}
+                  <span className="text-slate-500">{stopChinese(sourceId)}</span>
+                  <span className="mx-1.5 text-brand-400">→</span>
+                  {stopName(destId)}{" "}
+                  <span className="text-slate-500">{stopChinese(destId)}</span>
                 </p>
-                <p className="mt-1 text-sm text-brand-400">
-                  Total travel time:{" "}
-                  <span className="font-semibold">{result.totalMinutes} min</span>
+                <p className="whitespace-nowrap text-2xl font-semibold text-brand-400">
+                  {result.totalMinutes}
+                  <span className="ml-1 text-sm font-normal text-slate-400">
+                    min
+                  </span>
                 </p>
-              </>
+              </div>
             )}
           </div>
-
-          <div className="mt-4 space-y-2 text-sm text-slate-400">
-            <p>
-              Normal condition (East Gate to Engineering College): full
-              route-board path, 26 min.
-            </p>
-            <p>
-              With emergency delay: the search switches to the connector path
-              East Gate to School Hospital to Lixing Building to Gewu Building to
-              Engineering College, 27 min.
-            </p>
-          </div>
-
-          <p className="mt-4 text-xs text-slate-500">
-            The connector edge is used only to demonstrate route optimization
-            under delay. The main route context is based on the Yunnan
-            University bus route-board.
-          </p>
         </div>
       </div>
     </Card>

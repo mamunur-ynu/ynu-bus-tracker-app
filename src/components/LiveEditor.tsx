@@ -320,14 +320,11 @@ export default function LiveEditor() {
   return (
     <div className="space-y-6">
       <Card
-        title="Live Campus Editor (v2)"
-        subtitle={cloudOn ? "Connected to cloud database" : "Saved in your browser"}
+        title="Live Campus Editor"
+        subtitle={
+          cloudOn ? "Cloud connected · live" : "Saved locally"
+        }
       >
-        <p className="mb-4 text-sm text-slate-400">
-          Add your own stops and routes below. The map and the shortest-route
-          search update immediately, and your changes are remembered after a
-          reload. This is the first step toward a database-backed version.
-        </p>
 
         <div className="grid gap-6 lg:grid-cols-5">
           {/* Map */}
@@ -754,11 +751,6 @@ export default function LiveEditor() {
           </div>
         </div>
       </Card>
-
-      <p className="text-xs text-slate-500">
-        Data is stored in your browser only. The next step is to move this
-        storage to a cloud database so several users can share the same data.
-      </p>
     </div>
   );
 }
