@@ -231,6 +231,79 @@ export default function MiniCity3D() {
       scene.add(bulb);
     });
 
+    // Crosswalks + traffic lights at the main junction stops
+    const crossMat = new THREE.MeshStandardMaterial({
+      color: 0xe4ebf7,
+      emissive: 0x2a3346,
+      emissiveIntensity: 0.35,
+    });
+    const tlBoxMat = new THREE.MeshStandardMaterial({ color: 0x11161f });
+    const junctions = [1, 2, 6, 8];
+    junctions.forEach((sid, k) => {
+      const s = getStop(sid);
+      if (!s) return;
+      const p = worldOf(s.x, s.y);
+      const conn = routes.find(
+        (r) =>
+          !r.isSimulation &&
+          (r.sourceStopId === sid || r.destinationStopId === sid)
+      );
+      let ang = 0;
+      if (conn) {
+        const oid =
+          conn.sourceStopId === sid ? conn.destinationStopId : conn.sourceStopId;
+        const o = getStop(oid);
+        if (o) {
+          const q = worldOf(o.x, o.y);
+          ang = Math.atan2(q.z - p.z, q.x - p.x);
+        }
+      }
+      const px = -Math.sin(ang);
+      const pz = Math.cos(ang);
+      for (let j = -3; j <= 3; j++) {
+        const bar = new THREE.Mesh(
+          new THREE.BoxGeometry(0.3, 0.05, roadW * 0.92),
+          crossMat
+        );
+        bar.position.set(
+          p.x + Math.cos(ang) * j * 0.55,
+          0.33,
+          p.z + Math.sin(ang) * j * 0.55
+        );
+        bar.rotation.y = -ang;
+        scene.add(bar);
+      }
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.12, 4.4, 6),
+        postMat
+      );
+      pole.position.set(p.x + px * (roadW / 2 + 1), 2.2, p.z + pz * (roadW / 2 + 1));
+      pole.castShadow = true;
+      scene.add(pole);
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.4, 0.5), tlBoxMat);
+      box.position.set(p.x + px * (roadW / 2 + 1), 4.4, p.z + pz * (roadW / 2 + 1));
+      scene.add(box);
+      const colors = [0xef4444, 0xf59e0b, 0x34d399];
+      const litIdx = k % 3;
+      colors.forEach((c, ci) => {
+        const on = ci === litIdx;
+        const dot = new THREE.Mesh(
+          new THREE.SphereGeometry(0.14, 8, 8),
+          new THREE.MeshStandardMaterial({
+            color: c,
+            emissive: c,
+            emissiveIntensity: on ? 2.2 : 0.05,
+          })
+        );
+        dot.position.set(
+          p.x + px * (roadW / 2 + 1.28),
+          4.8 - ci * 0.4,
+          p.z + pz * (roadW / 2 + 1)
+        );
+        scene.add(dot);
+      });
+    });
+
     // City blocks: buildings placed on a grid, avoiding the roads
     const wallTints = ["#2a3556", "#243a5e", "#33305c", "#22405e", "#2c3350"];
     const facades = wallTints.map((w, i) => facadeTexture(w, i * 11 + 1));
@@ -243,11 +316,11 @@ export default function MiniCity3D() {
         let near = Infinity;
         for (const [a, b] of roadSegs)
           near = Math.min(near, distToSeg(jx, jz, a, b));
-        if (near < 4.6 || near > 26) continue;
-        if (rng(bi + 40) > 0.82) continue; // leave some gaps
-        const h = 4 + rng(bi + 3) * 13;
-        const bw = 2.6 + rng(bi + 4) * 2.6;
-        const bd = 2.6 + rng(bi + 5) * 2.6;
+        if (near < 6.5 || near > 22) continue; // keep streets open
+        if (rng(bi + 40) > 0.6) continue; // leave plenty of gaps
+        const h = 3.5 + rng(bi + 3) * 7;
+        const bw = 2.6 + rng(bi + 4) * 2.4;
+        const bd = 2.6 + rng(bi + 5) * 2.4;
         const tex = facades[bi % facades.length].clone();
         tex.needsUpdate = true;
         const mat = new THREE.MeshStandardMaterial({
@@ -347,7 +420,8 @@ export default function MiniCity3D() {
       cum: number[];
       total: number;
       speed: number;
-      offset: number;
+      dwell: number;
+      offsetTime: number;
     }
     const rigs: Rig[] = [];
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
@@ -427,21 +501,44 @@ export default function MiniCity3D() {
         pts,
         cum,
         total,
-        speed: total / (20 + li * 6),
-        offset: (li * total) / 2,
+        speed: total / (16 + li * 5),
+        dwell: 1.6,
+        offsetTime: li * 7,
       });
     });
 
+    // Move a bus, pausing (dwelling) briefly at each stop.
     function placeBus(r: Rig, el: number) {
-      const d = (r.offset + el * r.speed) % r.total;
-      let seg = 0;
-      while (seg < r.cum.length - 2 && r.cum[seg + 1] < d) seg++;
-      const segLen = r.cum[seg + 1] - r.cum[seg] || 1;
-      const tt = (d - r.cum[seg]) / segLen;
-      const a = r.pts[seg];
-      const b = r.pts[seg + 1];
-      r.mesh.position.set(a.x + (b.x - a.x) * tt, 0, a.z + (b.z - a.z) * tt);
-      r.mesh.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x);
+      const nStops = r.pts.length - 1;
+      const travelTime = r.total / r.speed;
+      const period = travelTime + nStops * r.dwell;
+      let e = (r.offsetTime + el) % period;
+      const face = (a: THREE.Vector3, b: THREE.Vector3) => {
+        r.mesh.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x);
+      };
+      for (let i = 0; i < nStops; i++) {
+        const a = r.pts[i];
+        const b = r.pts[i + 1];
+        if (e < r.dwell) {
+          r.mesh.position.set(a.x, 0, a.z);
+          face(a, b);
+          return;
+        }
+        e -= r.dwell;
+        const segLen = r.cum[i + 1] - r.cum[i] || 1;
+        const tSeg = segLen / r.speed;
+        if (e < tSeg) {
+          const tt = e / tSeg;
+          r.mesh.position.set(
+            a.x + (b.x - a.x) * tt,
+            0,
+            a.z + (b.z - a.z) * tt
+          );
+          face(a, b);
+          return;
+        }
+        e -= tSeg;
+      }
     }
 
     const clock = new THREE.Clock();
