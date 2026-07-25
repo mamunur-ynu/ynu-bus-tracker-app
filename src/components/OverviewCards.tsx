@@ -7,11 +7,12 @@ import {
   stopQueues,
   isPeakHour,
 } from "../data/campusData";
+import { useLang, type I18nKey } from "../lib/i18n";
 
 interface Stat {
-  label: string;
+  labelKey: I18nKey;
+  hintKey: I18nKey;
   value: number;
-  hint: string;
 }
 
 // Counts up from 0 to `target` once, respecting reduced-motion.
@@ -44,18 +45,19 @@ function useCountUp(target: number, durationMs = 900) {
 
 function StatCard({ stat, index }: { stat: Stat; index: number }) {
   const value = useCountUp(stat.value);
+  const { t } = useLang();
   return (
     <div
       className="card p-4"
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <p className="text-xs uppercase tracking-wider text-slate-400">
-        {stat.label}
+        {t(stat.labelKey)}
       </p>
       <p className="stat-value mt-2 text-3xl font-semibold text-white">
         {value}
       </p>
-      <p className="mt-1 text-xs text-slate-500">{stat.hint}</p>
+      <p className="mt-1 text-xs text-slate-500">{t(stat.hintKey)}</p>
     </div>
   );
 }
@@ -69,18 +71,18 @@ export default function OverviewCards() {
   );
 
   const stats: Stat[] = [
-    { label: "Stops", value: stops.length, hint: "Campus nodes" },
-    { label: "Routes", value: routes.length, hint: "Directed edges" },
-    { label: "Buses", value: buses.length, hint: "Active fleet" },
-    { label: "Schedules", value: schedules.length, hint: "Daily trips" },
-    { label: "Peak Trips", value: peakCount, hint: "In peak windows" },
-    { label: "Waiting", value: waiting, hint: "Passengers in queues" },
+    { labelKey: "stat.stops", hintKey: "stat.stops.hint", value: stops.length },
+    { labelKey: "stat.routes", hintKey: "stat.routes.hint", value: routes.length },
+    { labelKey: "stat.buses", hintKey: "stat.buses.hint", value: buses.length },
+    { labelKey: "stat.schedules", hintKey: "stat.schedules.hint", value: schedules.length },
+    { labelKey: "stat.peak", hintKey: "stat.peak.hint", value: peakCount },
+    { labelKey: "stat.waiting", hintKey: "stat.waiting.hint", value: waiting },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
       {stats.map((stat, i) => (
-        <StatCard key={stat.label} stat={stat} index={i} />
+        <StatCard key={stat.labelKey} stat={stat} index={i} />
       ))}
     </div>
   );
