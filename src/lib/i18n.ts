@@ -74,6 +74,11 @@ let lang: Lang =
     (localStorage.getItem("lang") as Lang)) ||
   "en";
 
+// Apply the remembered language to <html lang> on first load.
+if (typeof document !== "undefined") {
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+}
+
 type Listener = (l: Lang) => void;
 const listeners = new Set<Listener>();
 
@@ -87,6 +92,11 @@ export function setLang(l: Lang) {
     localStorage.setItem("lang", l);
   } catch {
     /* ignore */
+  }
+  // Keep <html lang> in sync so screen readers and search engines use the
+  // right language and pronunciation.
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = l === "zh" ? "zh-CN" : "en";
   }
   for (const fn of listeners) fn(l);
 }

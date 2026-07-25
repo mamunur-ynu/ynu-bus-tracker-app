@@ -3,7 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Campus Bus Tracker - Visual Dashboard</title>
+    <meta name="theme-color" content="#0ea5e9" />
+
+    <title>Smart Campus Bus Tracker — Yunnan University</title>
+    <meta
+      name="description"
+      content="Live campus shuttle tracker and route optimizer for Yunnan University: Dijkstra shortest routes, real-time arrivals, a 3D campus view and a bilingual AI assistant."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Smart Campus Bus Tracker — Yunnan University" />
+    <meta
+      property="og:description"
+      content="Dijkstra route optimization, real-time arrivals, a 3D campus city and an AI assistant — live in the browser."
+    />
+    <meta property="og:url" content="https://ynu-bus-tracker.netlify.app" />
+    <meta property="og:image" content="https://ynu-bus-tracker.netlify.app/icon-512.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="canonical" href="https://ynu-bus-tracker.netlify.app" />
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,6 +33,13 @@
     />
   </head>
   <body>
+    <a
+      href="#main"
+      style="position:absolute;left:-9999px;top:0;padding:10px 16px;background:#0ea5e9;color:#04121f;border-radius:0 0 8px 0;z-index:100"
+      onfocus="this.style.left='0'"
+      onblur="this.style.left='-9999px'"
+      >Skip to main content</a
+    >
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

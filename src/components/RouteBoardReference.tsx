@@ -18,6 +18,10 @@ export default function RouteBoardReference() {
           <img
             src={BOARD_IMAGE}
             alt="Yunnan University campus bus route board"
+            width={1600}
+            height={1200}
+            loading="lazy"
+            decoding="async"
             className="mx-auto max-h-[420px] w-full object-contain"
             onError={() => setImageOk(false)}
           />

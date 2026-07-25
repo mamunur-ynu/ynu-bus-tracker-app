@@ -29,6 +29,9 @@ export default function RouteMap({
           <img
             src={MAP_IMAGE}
             alt="Yunnan University Chenggong campus map"
+            width={1080}
+            height={701}
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover opacity-90"
             onError={() => setImageOk(false)}
           />

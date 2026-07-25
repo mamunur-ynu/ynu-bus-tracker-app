@@ -33,8 +33,11 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | Campus stops · route edges | 12 · 10 |
 | Bus lines simulated in real time | 2 (Z52, Z53) |
 | Route search | Dijkstra, computed client-side in **< 1 ms** |
-| 3D scene | ~60 fps, three.js chunk lazy-loaded (loads only on the 3D tab) |
-| Tests | 12 unit tests, run on every push by GitHub Actions |
+| Initial JS payload | **131 KB gzipped** — the 3D scene is a separate lazy chunk |
+| Imagery | route board optimised **4.7 MB → 282 KB** (−94%) |
+| Offline | full app shell + campus imagery precached (PWA, 15 entries) |
+| Tests | 16 unit tests, run on every push by GitHub Actions |
+| Accessibility | skip link, landmarks, `aria-pressed`/`aria-current`, live regions, reduced-motion, `<html lang>` follows the toggle |
 | Languages | English + 中文, full UI toggle |
 
 ## 🎬 Screenshots
@@ -54,7 +57,10 @@ Everything is backed by a real cloud database with live sync across devices, gat
 - **AI campus assistant (tool-calling agent)** — ask *"How long from East Gate to the Library?"* in English or Chinese. An LLM running in a **serverless function** calls the app's own Dijkstra search as a tool, so every travel time it quotes is genuinely computed, never hallucinated. The model key never reaches the browser, and the assistant degrades gracefully to a local rule-based parser when no key is configured.
 - **Dijkstra shortest-route** — pick any From/To, choose a bus line, and apply an emergency delay to watch the path re-route live.
 - **3D live city (Three.js)** — a night-lit miniature campus with wide roads, lane markings, greenery, buildings with lit windows, street lamps, crosswalks, and **traffic lights with a real second-countdown**. Buses drive the true route loops and pause at each stop.
-- **Live arrivals + ETA** — a real-time board counting down each bus's arrival at every stop.
+- **Live arrivals + ETA** — a real-time board counting down each bus's arrival at every stop, with **favourite stops** pinned to the top.
+- **Service alerts** — delays and unusually crowded stops surface as an alert strip, the way real transit apps announce disruptions.
+- **Step-by-step trip itinerary** — results read as *board → ride N min → alight*, not a flat list of stop names.
+- **Works offline** — the app shell and campus imagery are precached, and an offline banner explains what still works.
 - **Cloud database (Supabase / PostgreSQL)** — stops and routes are stored online and shared across devices.
 - **Real-time sync** — a change on one screen appears instantly on every other open screen.
 - **Admin auth** — only a signed-in admin can add / edit / delete; everyone else has a read-only view.

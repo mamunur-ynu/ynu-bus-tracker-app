@@ -3,6 +3,8 @@ import Header from "./components/Header";
 import OverviewCards from "./components/OverviewCards";
 import ShortestRouteDemo from "./components/ShortestRouteDemo";
 import LiveArrivals from "./components/LiveArrivals";
+import ServiceAlerts from "./components/ServiceAlerts";
+import OfflineBanner from "./components/OfflineBanner";
 import RouteBoardReference from "./components/RouteBoardReference";
 import RouteTimeline from "./components/RouteTimeline";
 import PassengerQueuePanel from "./components/PassengerQueuePanel";
@@ -79,11 +81,16 @@ export default function App() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
       <div className="mb-4 flex justify-end">
-        <div className="inline-flex items-center gap-1 rounded-full border border-slate-800/80 bg-white/[0.02] p-1">
+        <div
+          role="group"
+          aria-label="Language"
+          className="inline-flex items-center gap-1 rounded-full border border-slate-800/80 bg-white/[0.02] p-1"
+        >
           <button
             className={langBtn(lang === "en")}
             onClick={() => setLang("en")}
             aria-label="Switch to English"
+            aria-pressed={lang === "en"}
           >
             EN
           </button>
@@ -91,6 +98,7 @@ export default function App() {
             className={langBtn(lang === "zh")}
             onClick={() => setLang("zh")}
             aria-label="切换到中文"
+            aria-pressed={lang === "zh"}
           >
             中文
           </button>
@@ -99,21 +107,39 @@ export default function App() {
 
       <Header />
 
-      <div className="mb-8 flex justify-center gap-2">
-        <button className={tabClass(tab === "dashboard")} onClick={() => setTab("dashboard")}>
+      <nav aria-label="Main sections" className="mb-8 flex flex-wrap justify-center gap-2">
+        <button
+          className={tabClass(tab === "dashboard")}
+          aria-current={tab === "dashboard" ? "page" : undefined}
+          onClick={() => setTab("dashboard")}
+        >
           {t("tab.dashboard")}
         </button>
-        <button className={tabClass(tab === "map")} onClick={() => setTab("map")}>
+        <button
+          className={tabClass(tab === "map")}
+          aria-current={tab === "map" ? "page" : undefined}
+          onClick={() => setTab("map")}
+        >
           {t("tab.map")}
         </button>
-        <button className={tabClass(tab === "ai")} onClick={() => setTab("ai")}>
+        <button
+          className={tabClass(tab === "ai")}
+          aria-current={tab === "ai" ? "page" : undefined}
+          onClick={() => setTab("ai")}
+        >
           {t("tab.ai")}
         </button>
-        <button className={tabClass(tab === "editor")} onClick={() => setTab("editor")}>
+        <button
+          className={tabClass(tab === "editor")}
+          aria-current={tab === "editor" ? "page" : undefined}
+          onClick={() => setTab("editor")}
+        >
           {t("tab.editor")}
         </button>
-      </div>
+      </nav>
 
+      <main id="main">
+      <OfflineBanner />
       {tab === "map" && (
         <Suspense
           fallback={
@@ -155,6 +181,7 @@ export default function App() {
           <div key={section} className="animate-fadeIn space-y-8">
             {section === "overview" && (
               <>
+                <ServiceAlerts />
                 <OverviewCards />
                 <LiveArrivals />
                 <ShortestRouteDemo />
@@ -187,6 +214,8 @@ export default function App() {
           </div>
         </>
       )}
+
+      </main>
 
       <footer className="mt-14 border-t border-slate-800/70 pt-6 text-center text-xs text-slate-500">
         {t("footer.built")}

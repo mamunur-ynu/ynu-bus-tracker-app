@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import Card from "./Card";
 import RouteMap from "./RouteMap";
+import TripSteps from "./TripSteps";
 import {
   stops,
   routes,
   busLines,
   DELAY_ROUTE_ID,
   stopName,
-  stopChinese,
 } from "../data/campusData";
 import type { Route } from "../data/campusData";
 import { findShortestRoute } from "../algorithms/dijkstra";
@@ -134,25 +134,17 @@ export default function ShortestRouteDemo() {
 
           <div className="mt-4 rounded-xl border border-slate-700/50 bg-ink-950/40 p-4">
             <p className="text-xs uppercase tracking-wider text-slate-400">
-              Shortest path
+              Your trip
             </p>
-            <p className="mt-1 text-sm font-medium text-white">{pathText}</p>
-            {result.found && (
-              <div className="mt-3 flex items-end justify-between gap-3">
-                <p className="text-sm text-slate-400">
-                  {stopName(sourceId)}{" "}
-                  <span className="text-slate-500">{stopChinese(sourceId)}</span>
-                  <span className="mx-1.5 text-brand-400">→</span>
-                  {stopName(destId)}{" "}
-                  <span className="text-slate-500">{stopChinese(destId)}</span>
-                </p>
-                <p className="whitespace-nowrap text-2xl font-semibold text-brand-400">
-                  {result.totalMinutes}
-                  <span className="ml-1 text-sm font-normal text-slate-400">
-                    min
-                  </span>
-                </p>
-              </div>
+            {result.found ? (
+              <TripSteps
+                path={result.path}
+                routeIds={result.routeIds}
+                totalMinutes={result.totalMinutes}
+                workingRoutes={workingRoutes}
+              />
+            ) : (
+              <p className="mt-1 text-sm font-medium text-white">{pathText}</p>
             )}
           </div>
         </div>

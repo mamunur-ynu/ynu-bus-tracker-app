@@ -10,6 +10,14 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["ynu-campus-map.jpg", "ynu-route-board.jpg"],
+      workbox: {
+        // Precache the shell, code chunks and campus imagery so the map and
+        // route search keep working with no network.
+        globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,webmanifest}"],
+        cleanupOutdatedCaches: true,
+        navigateFallback: "index.html",
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+      },
       manifest: {
         name: "YNU Smart Campus Bus Tracker",
         short_name: "YNU Bus",

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Card from "./Card";
 import { busLines, routes, getStop } from "../data/campusData";
 import { useLang } from "../lib/i18n";
+import { useFavorites } from "../lib/favorites";
 
 // How fast the simulation clock runs: route-minutes advanced per real second.
 // 0.4 => one route-minute every 2.5 seconds, so ETAs tick down believably.
@@ -41,6 +42,7 @@ function mmss(minutes: number): string {
 // route-board loop; the ETA to every stop counts down in real time.
 export default function LiveArrivals() {
   const { t, lang } = useLang();
+  const { favorites } = useFavorites();
   const startRef = useRef<number>(Date.now());
   const [, force] = useState(0);
 
@@ -96,7 +98,12 @@ export default function LiveArrivals() {
             }))
             .sort((a, b) => a.eta - b.eta);
           const next = upcoming[0];
-          const then = upcoming.slice(1, 4);
+          // Favourite stops are pinned above the rest of the list.
+          const rest = upcoming.slice(1);
+          const then = [
+            ...rest.filter((s) => favorites.includes(s.id)),
+            ...rest.filter((s) => !favorites.includes(s.id)),
+          ].slice(0, 4);
 
           return (
             <div
@@ -138,7 +145,14 @@ export default function LiveArrivals() {
                     key={s.id}
                     className="flex items-center justify-between text-xs text-slate-400"
                   >
-                    <span>{stopLabel(s.id)}</span>
+                    <span className="flex items-center gap-1.5">
+                      {favorites.includes(s.id) && (
+                        <span aria-label="favourite" className="text-amber-300">
+                          ★
+                        </span>
+                      )}
+                      {stopLabel(s.id)}
+                    </span>
                     <span className="tabular-nums text-slate-300">
                       {mmss(s.eta)}
                     </span>
