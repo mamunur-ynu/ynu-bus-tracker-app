@@ -36,6 +36,28 @@ describe("askAssistant local fallback", () => {
     expect(r.text).toMatch(/start and a destination/i);
   });
 
+  it("understands everyday nicknames like 'main gate'", async () => {
+    vi.stubGlobal("fetch", failingFetch);
+    const r = await askAssistant(
+      "how long from the library to the main gate?",
+      stops,
+      routes,
+      "en"
+    );
+    expect(r.text).toMatch(/minutes|Walk/);
+  });
+
+  it("suggests walking to the nearest served stop for unserved places", async () => {
+    vi.stubGlobal("fetch", failingFetch);
+    const r = await askAssistant(
+      "i'm at qiu yuan 7, i want to go to the main gate",
+      stops,
+      routes,
+      "en"
+    );
+    expect(r.text).toMatch(/Walk to the nearest stop/);
+  });
+
   it("replies in Chinese when the language is zh", async () => {
     vi.stubGlobal("fetch", failingFetch);
     const r = await askAssistant("东门到图书馆要多久？", stops, routes, "zh");

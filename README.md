@@ -55,7 +55,7 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | Layer | Technology |
 |------|------------|
 | Frontend | React 18 · TypeScript · Vite 5 · Tailwind CSS |
-| AI | Claude API with tool calling, via a Netlify serverless function |
+| AI | Gemini / Claude with tool calling, via a Netlify serverless function |
 | 3D | Three.js |
 | Algorithm | Dijkstra shortest path (TypeScript) |
 | Database | Supabase (PostgreSQL) |
@@ -91,7 +91,17 @@ npm run dev        # open the local URL Vite prints
 
 To enable the cloud, add your Supabase URL and publishable key in `src/lib/supabaseConfig.ts`. Without them the app still runs using browser storage.
 
-To enable the **AI assistant**, set `ANTHROPIC_API_KEY` in your Netlify site (Site configuration → Environment variables). The key is only read inside the serverless function — it never reaches the browser. Without it the assistant automatically falls back to a local rule-based parser that still computes real routes.
+To enable the **AI assistant**, add a model key in your Netlify site (Site configuration → Environment variables):
+
+| Variable | Provider | Notes |
+|---|---|---|
+| `AI_API_KEY` (+ optional `AI_BASE_URL`, `AI_MODEL`) | any OpenAI-compatible API | Zhipu GLM, Qwen, Groq, DeepSeek… Defaults to Zhipu `glm-4-flash`, which has a free tier |
+| `GEMINI_API_KEY` | Google Gemini | free tier, no card required |
+| `ANTHROPIC_API_KEY` | Claude | paid |
+
+Example for Groq: `AI_API_KEY=<key>`, `AI_BASE_URL=https://api.groq.com/openai/v1`, `AI_MODEL=llama-3.3-70b-versatile`.
+
+The key is only read inside the serverless function — it never reaches the browser. Without any key the assistant automatically falls back to a local rule-based parser that still computes real routes.
 
 ```bash
 npm run build      # production build → dist/
