@@ -11,13 +11,14 @@ import PeakHourTimeline from "./components/PeakHourTimeline";
 import DataTables from "./components/DataTables";
 import ReportSummary from "./components/ReportSummary";
 import LiveEditor from "./components/LiveEditor";
+import AIAssistant from "./components/AIAssistant";
 import Toaster from "./components/Toaster";
 
 // The 3D city pulls in three.js, so load it only when its tab is opened.
 const MiniCity3D = lazy(() => import("./components/MiniCity3D"));
 import { useLang, type I18nKey } from "./lib/i18n";
 
-type Tab = "dashboard" | "map" | "editor";
+type Tab = "dashboard" | "map" | "ai" | "editor";
 type Section = "overview" | "routes" | "capacity" | "data";
 
 const sections: {
@@ -105,6 +106,9 @@ export default function App() {
         <button className={tabClass(tab === "map")} onClick={() => setTab("map")}>
           {t("tab.map")}
         </button>
+        <button className={tabClass(tab === "ai")} onClick={() => setTab("ai")}>
+          {t("tab.ai")}
+        </button>
         <button className={tabClass(tab === "editor")} onClick={() => setTab("editor")}>
           {t("tab.editor")}
         </button>
@@ -119,6 +123,8 @@ export default function App() {
           <MiniCity3D />
         </Suspense>
       )}
+
+      {tab === "ai" && <AIAssistant />}
 
       {tab === "editor" && <LiveEditor />}
 

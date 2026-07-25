@@ -26,18 +26,19 @@ Everything is backed by a real cloud database with live sync across devices, gat
 
 ## 🎬 Screenshots
 
-> Add your images to `docs/screenshots/` and they will appear here.
-
 | Dashboard | 3D City |
 |---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![3D City](docs/screenshots/city3d.png) |
+| ![Dashboard](docs/dashboard.png) | ![3D City](docs/city3d.png) |
 
-| Live Arrivals & ETA | Live Editor (admin) |
+| Live arrivals & ETA | Live editor (admin) |
 |---|---|
-| ![Live Arrivals](docs/screenshots/arrivals.png) | ![Editor](docs/screenshots/editor.png) |
+| ![Live arrivals](docs/arrivals.png) | ![Live editor](docs/editor.png) |
+
+> Or try the **[live demo](https://ynu-bus-tracker.netlify.app)** — open the **3D City** tab and drag to orbit while the buses run.
 
 ## 🚀 Features
 
+- **AI campus assistant (tool-calling agent)** — ask *"How long from East Gate to the Library?"* in English or Chinese. An LLM running in a **serverless function** calls the app's own Dijkstra search as a tool, so every travel time it quotes is genuinely computed, never hallucinated. The model key never reaches the browser, and the assistant degrades gracefully to a local rule-based parser when no key is configured.
 - **Dijkstra shortest-route** — pick any From/To, choose a bus line, and apply an emergency delay to watch the path re-route live.
 - **3D live city (Three.js)** — a night-lit miniature campus with wide roads, lane markings, greenery, buildings with lit windows, street lamps, crosswalks, and **traffic lights with a real second-countdown**. Buses drive the true route loops and pause at each stop.
 - **Live arrivals + ETA** — a real-time board counting down each bus's arrival at every stop.
@@ -54,6 +55,7 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | Layer | Technology |
 |------|------------|
 | Frontend | React 18 · TypeScript · Vite 5 · Tailwind CSS |
+| AI | Claude API with tool calling, via a Netlify serverless function |
 | 3D | Three.js |
 | Algorithm | Dijkstra shortest path (TypeScript) |
 | Database | Supabase (PostgreSQL) |
@@ -89,6 +91,8 @@ npm run dev        # open the local URL Vite prints
 
 To enable the cloud, add your Supabase URL and publishable key in `src/lib/supabaseConfig.ts`. Without them the app still runs using browser storage.
 
+To enable the **AI assistant**, set `ANTHROPIC_API_KEY` in your Netlify site (Site configuration → Environment variables). The key is only read inside the serverless function — it never reaches the browser. Without it the assistant automatically falls back to a local rule-based parser that still computes real routes.
+
 ```bash
 npm run build      # production build → dist/
 npm run preview    # preview the production build
@@ -97,16 +101,19 @@ npm run preview    # preview the production build
 ## 📁 Project structure
 
 ```
+netlify/functions/
+  assistant.mts           serverless AI agent (tool calling → Dijkstra)
 src/
-  App.tsx                 tabs: Dashboard · 3D City · Live Editor
-  algorithms/dijkstra.ts  shortest-path engine
+  App.tsx                 tabs: Dashboard · 3D City · Ask AI · Live Editor
+  algorithms/dijkstra.ts  shortest-path engine (+ unit tests)
   components/
     MiniCity3D.tsx        the Three.js 3D city
+    AIAssistant.tsx       chat UI for the assistant
     LiveArrivals.tsx      real-time ETA board
     ShortestRouteDemo.tsx interactive map + route
     LiveEditor.tsx        cloud CRUD + admin auth
   data/campusData.ts      stops, routes, bus lines
-  lib/                    cloud, persistence, i18n, toast
+  lib/                    cloud, persistence, i18n, toast, assistant
 ```
 
 ## 📚 Context

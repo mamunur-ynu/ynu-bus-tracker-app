@@ -21,6 +21,23 @@ const dict = {
   "tab.dashboard": { en: "Dashboard", zh: "仪表盘" },
   "tab.editor": { en: "Live Editor", zh: "实时编辑器" },
   "tab.map": { en: "3D City", zh: "3D 城市" },
+  "tab.ai": { en: "Ask AI", zh: "智能助手" },
+  "ai.title": { en: "Campus Assistant", zh: "校园助手" },
+  "ai.subtitle": {
+    en: "Answers use the live route engine",
+    zh: "答案来自实时路径引擎",
+  },
+  "ai.hello": {
+    en: "Ask me anything about getting around campus — I compute real routes with Dijkstra.",
+    zh: "校园出行问题都可以问我 —— 我会用 Dijkstra 实时计算路线。",
+  },
+  "ai.placeholder": {
+    en: "e.g. How long from East Gate to the Library?",
+    zh: "例如：东门到图书馆要多久？",
+  },
+  "ai.send": { en: "Send", zh: "发送" },
+  "ai.thinking": { en: "Thinking…", zh: "思考中…" },
+  "ai.offline": { en: "offline mode", zh: "离线模式" },
   "map.title": { en: "Campus Operations · 3D", zh: "校园运营 · 3D" },
   "map.subtitle": { en: "Drag to orbit · live buses", zh: "拖动旋转 · 实时公交" },
   "section.overview": { en: "Overview", zh: "概览" },
