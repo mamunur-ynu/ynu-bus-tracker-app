@@ -14,6 +14,8 @@ A full-stack web app with a live **3D city view**, Dijkstra route optimization, 
 
 **[▶ Live demo](https://ynu-bus-tracker.netlify.app)**
 
+![Demo](docs/demo.gif)
+
 </div>
 
 ---
@@ -23,6 +25,17 @@ A full-stack web app with a live **3D city view**, Dijkstra route optimization, 
 Smart Campus Bus Tracker turns a classic C++ data-structures project into a live, production-style product. It shows the Yunnan University shuttle network on an interactive map, computes the shortest route between any two stops with **Dijkstra's algorithm**, and renders a real-time **3D miniature city** where buses drive the real route-board loops, pause at stops, and obey traffic lights with second-countdowns.
 
 Everything is backed by a real cloud database with live sync across devices, gated admin editing, and automatic deployment on every push.
+
+## 📊 At a glance
+
+| | |
+|---|---|
+| Campus stops · route edges | 12 · 10 |
+| Bus lines simulated in real time | 2 (Z52, Z53) |
+| Route search | Dijkstra, computed client-side in **< 1 ms** |
+| 3D scene | ~60 fps, three.js chunk lazy-loaded (loads only on the 3D tab) |
+| Tests | 12 unit tests, run on every push by GitHub Actions |
+| Languages | English + 中文, full UI toggle |
 
 ## 🎬 Screenshots
 
@@ -129,6 +142,8 @@ src/
 ## 📚 Context
 
 This web app is the companion to the C++ final course project *"Smart Campus Bus Tracker and Route Optimizer"* for the School of Software and Artificial Intelligence, Yunnan University. The C++ console system is the main academic deliverable; this app extends the same idea into a live, cloud-based product.
+
+**→ [C++ repository](https://github.com/mamunur-ynu/yunnan-university-smart-campus-bus-tracker)** — OOP design, STL, Dijkstra, and the 46-page project report.
 
 ## 👤 Author
 
