@@ -280,12 +280,15 @@ export default function MiniCity3D() {
       color: string
     ) => {
       ctx.fillStyle = "#05070d";
-      ctx.fillRect(0, 0, 64, 64);
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 8;
+      ctx.strokeRect(6, 6, 116, 116);
       ctx.fillStyle = color;
-      ctx.font = "bold 46px monospace";
+      ctx.font = "bold 92px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String(n), 32, 36);
+      ctx.fillText(String(n), 64, 72);
       tex.needsUpdate = true;
     };
     const junctions = [1, 2, 6, 8];
@@ -372,16 +375,16 @@ export default function MiniCity3D() {
 
       // Digital second-countdown board (like real campus signals)
       const cvs = document.createElement("canvas");
-      cvs.width = 64;
-      cvs.height = 64;
+      cvs.width = 128;
+      cvs.height = 128;
       const ctx = cvs.getContext("2d");
       const tex = new THREE.CanvasTexture(cvs);
       tex.colorSpace = THREE.SRGBColorSpace;
       const board = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.92, 0.92),
-        new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+        new THREE.PlaneGeometry(1.7, 1.7),
+        new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
       );
-      board.position.set(hx + dir.x * 0.36, 3.75, hz + dir.z * 0.36);
+      board.position.set(hx + dir.x * 0.38, 3.4, hz + dir.z * 0.38);
       board.lookAt(
         board.position.x + dir.x,
         board.position.y,
