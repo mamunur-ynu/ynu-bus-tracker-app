@@ -114,15 +114,31 @@ export default function RouteMap({
         {/* Stop markers as HTML so the bilingual labels stay crisp. */}
         {stops.map((stop) => {
           const onPath = pathStopIds.includes(stop.id);
+          const waiting = stop.passengerCount ?? 0;
           return (
             <div
               key={stop.id}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${stop.x}%`, top: `${stop.y}%` }}
+              className="group absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${stop.x}%`, top: `${stop.y}%`, zIndex: onPath ? 20 : 10 }}
             >
-              <div className="flex flex-col items-center">
+              {/* Hover tooltip */}
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-700 bg-ink-950/95 px-2.5 py-1.5 text-left shadow-xl group-hover:block">
+                <p className="text-[11px] font-semibold text-white">
+                  {stop.englishName}
+                </p>
+                <p className="text-[10px] text-slate-400">{stop.chineseName}</p>
+                <p className="mt-0.5 text-[10px] text-brand-400">
+                  {waiting} waiting
+                </p>
+              </div>
+              <div
+                className="flex flex-col items-center"
+                tabIndex={0}
+                role="button"
+                aria-label={`${stop.englishName} (${stop.chineseName}), ${waiting} passengers waiting`}
+              >
                 <span
-                  className={`block rounded-full ring-2 ${
+                  className={`block rounded-full ring-2 transition-transform group-hover:scale-125 ${
                     onPath
                       ? "h-3.5 w-3.5 bg-brand-500 ring-brand-400"
                       : "h-2.5 w-2.5 bg-slate-200 ring-slate-500"

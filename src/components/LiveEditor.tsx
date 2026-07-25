@@ -24,6 +24,7 @@ import {
   currentEmail,
   onAuthChange,
 } from "../lib/cloud";
+import { toast } from "../lib/toast";
 
 // A self-contained interactive editor. It keeps its own data in the browser
 // (localStorage) so changes are remembered after a reload. This is the first
@@ -52,9 +53,11 @@ export default function LiveEditor() {
     const err = await signIn(loginEmail.trim(), loginPass);
     if (err) {
       setLoginMsg("Login failed: " + err);
+      toast.error("Login failed: " + err);
     } else {
       setLoginMsg("");
       setLoginPass("");
+      toast.success("Signed in as admin");
     }
   }
 
@@ -70,11 +73,13 @@ export default function LiveEditor() {
     const err = await cloudSeed(stops, routes);
     if (err) {
       setCloudMsg("Cloud error: " + err);
+      toast.error("Cloud sync failed");
     } else {
       setCloudMsg(
         `Synced ${stops.length} stops and ${routes.length} routes to the cloud.`
       );
       setCloudOn(true);
+      toast.success(`Synced ${stops.length} stops · ${routes.length} routes`);
     }
   }
 
@@ -102,6 +107,7 @@ export default function LiveEditor() {
       } catch (e) {
         // If the cloud call fails, keep using local data.
         console.warn("Cloud not reachable, using local data.", e);
+        toast.error("Cloud unreachable — showing local data");
       }
     })();
     return () => {
@@ -218,6 +224,7 @@ export default function LiveEditor() {
     setStopName("");
     setStopCn("");
     if (isCloudConfigured()) cloudUpsertStop(s);
+    toast.success(`Added stop "${s.englishName}"`);
   }
 
   function addRoute() {
@@ -233,6 +240,7 @@ export default function LiveEditor() {
     setRoutes((prev) => [...prev, r]);
     setRouteName("");
     if (isCloudConfigured()) cloudUpsertRoute(r);
+    toast.success(`Added route "${r.name}"`);
   }
 
   function reset() {
@@ -254,11 +262,13 @@ export default function LiveEditor() {
       cloudDeleteStop(id);
       affected.forEach((rid) => cloudDeleteRoute(rid));
     }
+    toast.info("Stop deleted");
   }
 
   function deleteRoute(id: number) {
     setRoutes((prev) => prev.filter((r) => r.id !== id));
     if (isCloudConfigured()) cloudDeleteRoute(id);
+    toast.info("Route deleted");
   }
 
   // Change the number of waiting passengers at a stop (never below zero).
@@ -535,7 +545,10 @@ export default function LiveEditor() {
                 <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm">
                   <span className="text-emerald-300">Admin: {adminEmail}</span>
                   <button
-                    onClick={() => signOut()}
+                    onClick={() => {
+                      signOut();
+                      toast.info("Signed out");
+                    }}
                     className="rounded-lg border border-slate-600 px-3 py-1 text-slate-300"
                   >
                     Logout

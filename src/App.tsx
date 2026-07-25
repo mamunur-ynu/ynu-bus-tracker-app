@@ -10,6 +10,7 @@ import PeakHourTimeline from "./components/PeakHourTimeline";
 import DataTables from "./components/DataTables";
 import ReportSummary from "./components/ReportSummary";
 import LiveEditor from "./components/LiveEditor";
+import Toaster from "./components/Toaster";
 
 type Tab = "dashboard" | "editor";
 type Section = "overview" | "routes" | "capacity" | "data";
@@ -92,14 +93,17 @@ export default function App() {
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+                  <span
+                    aria-hidden="true"
+                    className={`h-2 w-2 rounded-full ${s.dot}`}
+                  />
                   {s.label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-8">
+          <div key={section} className="animate-fadeIn space-y-8">
             {section === "overview" && (
               <>
                 <OverviewCards />
@@ -137,6 +141,8 @@ export default function App() {
       <footer className="mt-14 border-t border-slate-800/70 pt-6 text-center text-xs text-slate-500">
         Built with React, TypeScript, Vite &amp; Supabase &middot; Yunnan University
       </footer>
+
+      <Toaster />
     </div>
   );
 }
