@@ -130,23 +130,27 @@ export default function MiniCity3D() {
 
     const roadSegs: [THREE.Vector3, THREE.Vector3][] = [];
 
-    // Roads: asphalt + curbs + white centre line + cyan LED edges
+    // Roads: wide asphalt + curbs + dashed lane + green verge + LED edges
     const asphalt = new THREE.MeshStandardMaterial({
-      color: 0x1c2233,
-      roughness: 0.85,
+      color: 0x333b4d,
+      roughness: 0.95,
     });
-    const curbMat = new THREE.MeshStandardMaterial({ color: 0x2f3a52 });
+    const curbMat = new THREE.MeshStandardMaterial({ color: 0x3a465f });
+    const vergeMat = new THREE.MeshStandardMaterial({
+      color: 0x15502e,
+      roughness: 1,
+    });
     const lineMat = new THREE.MeshStandardMaterial({
-      color: 0xdfe7f5,
-      emissive: 0x2a3346,
-      emissiveIntensity: 0.4,
+      color: 0xeef3fb,
+      emissive: 0x3a4a60,
+      emissiveIntensity: 0.5,
     });
     const ledMat = new THREE.MeshStandardMaterial({
       color: 0x38bdf8,
       emissive: 0x38bdf8,
-      emissiveIntensity: 2.2,
+      emissiveIntensity: 1.2,
     });
-    const roadW = 4;
+    const roadW = 7;
     routes
       .filter((r) => !r.isSimulation)
       .forEach((r) => {
@@ -172,28 +176,37 @@ export default function MiniCity3D() {
         road.receiveShadow = true;
         scene.add(road);
 
-        const line = new THREE.Mesh(
-          new THREE.BoxGeometry(len * 0.94, 0.06, 0.18),
-          lineMat
-        );
-        line.position.set(mid.x, 0.32, mid.z);
-        line.rotation.y = -ang;
-        scene.add(line);
+        // dashed centre lane markings
+        const dashes = Math.max(1, Math.floor(len / 2.6));
+        for (let di = 0; di < dashes; di++) {
+          const f = (di + 0.5) / dashes;
+          const dash = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 0.06, 0.22),
+            lineMat
+          );
+          dash.position.set(
+            a.x + (b.x - a.x) * f,
+            0.32,
+            a.z + (b.z - a.z) * f
+          );
+          dash.rotation.y = -ang;
+          scene.add(dash);
+        }
 
         for (const sgn of [-1, 1]) {
           const led = new THREE.Mesh(
-            new THREE.BoxGeometry(len, 0.05, 0.14),
+            new THREE.BoxGeometry(len, 0.05, 0.12),
             ledMat
           );
           led.position.set(
-            mid.x + px * sgn * (roadW / 2),
+            mid.x + px * sgn * (roadW / 2 - 0.1),
             0.34,
-            mid.z + pz * sgn * (roadW / 2)
+            mid.z + pz * sgn * (roadW / 2 - 0.1)
           );
           led.rotation.y = -ang;
           scene.add(led);
           const curb = new THREE.Mesh(
-            new THREE.BoxGeometry(len, 0.22, 0.4),
+            new THREE.BoxGeometry(len, 0.24, 0.4),
             curbMat
           );
           curb.position.set(
@@ -204,6 +217,18 @@ export default function MiniCity3D() {
           curb.rotation.y = -ang;
           curb.receiveShadow = true;
           scene.add(curb);
+          const verge = new THREE.Mesh(
+            new THREE.BoxGeometry(len, 0.12, 1.5),
+            vergeMat
+          );
+          verge.position.set(
+            mid.x + px * sgn * (roadW / 2 + 1.15),
+            0.14,
+            mid.z + pz * sgn * (roadW / 2 + 1.15)
+          );
+          verge.rotation.y = -ang;
+          verge.receiveShadow = true;
+          scene.add(verge);
         }
       });
 
@@ -237,7 +262,14 @@ export default function MiniCity3D() {
       emissive: 0x2a3346,
       emissiveIntensity: 0.35,
     });
-    const tlBoxMat = new THREE.MeshStandardMaterial({ color: 0x11161f });
+    const tlBoxMat = new THREE.MeshStandardMaterial({ color: 0x0e131c });
+    interface Signal {
+      red: THREE.Mesh;
+      amber: THREE.Mesh;
+      green: THREE.Mesh;
+      offset: number;
+    }
+    const signals: Signal[] = [];
     const junctions = [1, 2, 6, 8];
     junctions.forEach((sid, k) => {
       const s = getStop(sid);
@@ -273,35 +305,53 @@ export default function MiniCity3D() {
         bar.rotation.y = -ang;
         scene.add(bar);
       }
+      const baseX = p.x + px * (roadW / 2 + 1.2);
+      const baseZ = p.z + pz * (roadW / 2 + 1.2);
+      // upright pole
       const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.12, 0.12, 4.4, 6),
+        new THREE.CylinderGeometry(0.16, 0.18, 6.4, 8),
         postMat
       );
-      pole.position.set(p.x + px * (roadW / 2 + 1), 2.2, p.z + pz * (roadW / 2 + 1));
+      pole.position.set(baseX, 3.2, baseZ);
       pole.castShadow = true;
       scene.add(pole);
-      const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.4, 0.5), tlBoxMat);
-      box.position.set(p.x + px * (roadW / 2 + 1), 4.4, p.z + pz * (roadW / 2 + 1));
-      scene.add(box);
-      const colors = [0xef4444, 0xf59e0b, 0x34d399];
-      const litIdx = k % 3;
-      colors.forEach((c, ci) => {
-        const on = ci === litIdx;
+      // mast arm reaching over the road
+      const armLen = Math.hypot(p.x - baseX, p.z - baseZ) + 0.6;
+      const arm = new THREE.Mesh(
+        new THREE.BoxGeometry(armLen, 0.2, 0.2),
+        postMat
+      );
+      arm.position.set((p.x + baseX) / 2, 6.1, (p.z + baseZ) / 2);
+      arm.rotation.y = -Math.atan2(p.z - baseZ, p.x - baseX);
+      scene.add(arm);
+      // signal housing hanging over the lane
+      const hx = p.x + px * 1.2;
+      const hz = p.z + pz * 1.2;
+      const housing = new THREE.Mesh(
+        new THREE.BoxGeometry(0.62, 2, 0.62),
+        tlBoxMat
+      );
+      housing.position.set(hx, 5.1, hz);
+      housing.castShadow = true;
+      scene.add(housing);
+      const dir = new THREE.Vector3(Math.cos(ang), 0, Math.sin(ang));
+      const mkDot = (cy: number, c: number) => {
         const dot = new THREE.Mesh(
-          new THREE.SphereGeometry(0.14, 8, 8),
+          new THREE.SphereGeometry(0.21, 14, 14),
           new THREE.MeshStandardMaterial({
             color: c,
             emissive: c,
-            emissiveIntensity: on ? 2.2 : 0.05,
+            emissiveIntensity: 0.04,
           })
         );
-        dot.position.set(
-          p.x + px * (roadW / 2 + 1.28),
-          4.8 - ci * 0.4,
-          p.z + pz * (roadW / 2 + 1)
-        );
+        dot.position.set(hx + dir.x * 0.34, cy, hz + dir.z * 0.34);
         scene.add(dot);
-      });
+        return dot;
+      };
+      const red = mkDot(5.72, 0xef4444);
+      const amber = mkDot(5.1, 0xf59e0b);
+      const green = mkDot(4.48, 0x34d399);
+      signals.push({ red, amber, green, offset: k * 3.4 });
     });
 
     // City blocks: buildings placed on a grid, avoiding the roads
@@ -316,7 +366,7 @@ export default function MiniCity3D() {
         let near = Infinity;
         for (const [a, b] of roadSegs)
           near = Math.min(near, distToSeg(jx, jz, a, b));
-        if (near < 6.5 || near > 22) continue; // keep streets open
+        if (near < 9.5 || near > 24) continue; // keep the wide streets open
         if (rng(bi + 40) > 0.6) continue; // leave plenty of gaps
         const h = 3.5 + rng(bi + 3) * 7;
         const bw = 2.6 + rng(bi + 4) * 2.4;
@@ -352,7 +402,7 @@ export default function MiniCity3D() {
       color: 0x1f6b3a,
       roughness: 1,
     });
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 110; i++) {
       const ang = rng(i + 100) * Math.PI * 2;
       const rad = rng(i + 200) * SIZE * 1.05;
       const tx = Math.cos(ang) * rad;
@@ -360,7 +410,7 @@ export default function MiniCity3D() {
       let near = Infinity;
       for (const [a, b] of roadSegs)
         near = Math.min(near, distToSeg(tx, tz, a, b));
-      if (near < 3.2 || near > 6.5) continue;
+      if (near < 4.6 || near > 8.5) continue;
       const trunk = new THREE.Mesh(
         new THREE.CylinderGeometry(0.18, 0.22, 1.4, 6),
         trunkMat
@@ -541,11 +591,22 @@ export default function MiniCity3D() {
       }
     }
 
+    const setLit = (m: THREE.Mesh, on: boolean) => {
+      (m.material as THREE.MeshStandardMaterial).emissiveIntensity = on ? 3 : 0.04;
+    };
+
     const clock = new THREE.Clock();
     let raf = 0;
     const tick = () => {
       const el = clock.getElapsedTime();
       rigs.forEach((r) => placeBus(r, el));
+      // Traffic-light cycle: green -> amber -> red
+      signals.forEach((sg) => {
+        const p = (el + sg.offset) % 12;
+        setLit(sg.green, p < 5);
+        setLit(sg.amber, p >= 5 && p < 6.5);
+        setLit(sg.red, p >= 6.5);
+      });
       controls.update();
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
