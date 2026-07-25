@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import Header from "./components/Header";
 import OverviewCards from "./components/OverviewCards";
 import ShortestRouteDemo from "./components/ShortestRouteDemo";
@@ -12,9 +12,12 @@ import DataTables from "./components/DataTables";
 import ReportSummary from "./components/ReportSummary";
 import LiveEditor from "./components/LiveEditor";
 import Toaster from "./components/Toaster";
+
+// The 3D city pulls in three.js, so load it only when its tab is opened.
+const MiniCity3D = lazy(() => import("./components/MiniCity3D"));
 import { useLang, type I18nKey } from "./lib/i18n";
 
-type Tab = "dashboard" | "editor";
+type Tab = "dashboard" | "map" | "editor";
 type Section = "overview" | "routes" | "capacity" | "data";
 
 const sections: {
@@ -99,10 +102,23 @@ export default function App() {
         <button className={tabClass(tab === "dashboard")} onClick={() => setTab("dashboard")}>
           {t("tab.dashboard")}
         </button>
+        <button className={tabClass(tab === "map")} onClick={() => setTab("map")}>
+          {t("tab.map")}
+        </button>
         <button className={tabClass(tab === "editor")} onClick={() => setTab("editor")}>
           {t("tab.editor")}
         </button>
       </div>
+
+      {tab === "map" && (
+        <Suspense
+          fallback={
+            <div className="skeleton h-[420px] w-full rounded-2xl md:h-[520px]" />
+          }
+        >
+          <MiniCity3D />
+        </Suspense>
+      )}
 
       {tab === "editor" && <LiveEditor />}
 
