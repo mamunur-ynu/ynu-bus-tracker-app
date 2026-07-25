@@ -268,8 +268,26 @@ export default function MiniCity3D() {
       amber: THREE.Mesh;
       green: THREE.Mesh;
       offset: number;
+      ctx: CanvasRenderingContext2D;
+      tex: THREE.CanvasTexture;
+      lastKey: string;
     }
     const signals: Signal[] = [];
+    const drawCount = (
+      ctx: CanvasRenderingContext2D,
+      tex: THREE.CanvasTexture,
+      n: number,
+      color: string
+    ) => {
+      ctx.fillStyle = "#05070d";
+      ctx.fillRect(0, 0, 64, 64);
+      ctx.fillStyle = color;
+      ctx.font = "bold 46px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(n), 32, 36);
+      tex.needsUpdate = true;
+    };
     const junctions = [1, 2, 6, 8];
     junctions.forEach((sid, k) => {
       const s = getStop(sid);
@@ -351,7 +369,27 @@ export default function MiniCity3D() {
       const red = mkDot(5.72, 0xef4444);
       const amber = mkDot(5.1, 0xf59e0b);
       const green = mkDot(4.48, 0x34d399);
-      signals.push({ red, amber, green, offset: k * 3.4 });
+
+      // Digital second-countdown board (like real campus signals)
+      const cvs = document.createElement("canvas");
+      cvs.width = 64;
+      cvs.height = 64;
+      const ctx = cvs.getContext("2d");
+      const tex = new THREE.CanvasTexture(cvs);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const board = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.92, 0.92),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true })
+      );
+      board.position.set(hx + dir.x * 0.36, 3.75, hz + dir.z * 0.36);
+      board.lookAt(
+        board.position.x + dir.x,
+        board.position.y,
+        board.position.z + dir.z
+      );
+      scene.add(board);
+
+      if (ctx) signals.push({ red, amber, green, offset: k * 3.4, ctx, tex, lastKey: "" });
     });
 
     // City blocks: buildings placed on a grid, avoiding the roads
@@ -481,12 +519,15 @@ export default function MiniCity3D() {
       emissiveIntensity: 2,
     });
     busLines.forEach((line, li) => {
-      const pts = line.stopIds
+      const base = line.stopIds
         .map((id) => getStop(id))
         .filter((s): s is (typeof stops)[number] => Boolean(s))
         .map((s) => worldOf(s.x, s.y));
-      if (pts.length < 2) return;
-      pts.push(pts[0].clone());
+      if (base.length < 2) return;
+      // Out-and-back so the bus always stays on drawn roads (the last stop
+      // has no road back to the first, so we retrace instead of teleporting).
+      const backHalf = base.slice(1, -1).reverse();
+      const pts = base.concat(backHalf, [base[0].clone()]);
       const cum = [0];
       let total = 0;
       for (let i = 1; i < pts.length; i++) {
@@ -600,12 +641,29 @@ export default function MiniCity3D() {
     const tick = () => {
       const el = clock.getElapsedTime();
       rigs.forEach((r) => placeBus(r, el));
-      // Traffic-light cycle: green -> amber -> red
+      // Traffic-light cycle: green -> amber -> red, with a second countdown
       signals.forEach((sg) => {
         const p = (el + sg.offset) % 12;
-        setLit(sg.green, p < 5);
-        setLit(sg.amber, p >= 5 && p < 6.5);
-        setLit(sg.red, p >= 6.5);
+        const g = p < 5;
+        const amb = p >= 5 && p < 6.5;
+        const red = p >= 6.5;
+        setLit(sg.green, g);
+        setLit(sg.amber, amb);
+        setLit(sg.red, red);
+        let color = "#34d399";
+        let rem = Math.ceil(5 - p);
+        if (amb) {
+          color = "#f59e0b";
+          rem = Math.ceil(6.5 - p);
+        } else if (red) {
+          color = "#f87171";
+          rem = Math.ceil(12 - p);
+        }
+        const key = color + rem;
+        if (key !== sg.lastKey) {
+          drawCount(sg.ctx, sg.tex, rem, color);
+          sg.lastKey = key;
+        }
       });
       controls.update();
       renderer.render(scene, camera);
