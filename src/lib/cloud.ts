@@ -77,8 +77,18 @@ function routeToRow(r: Route): RouteRow {
 export async function cloudFetch(): Promise<{ stops: Stop[]; routes: Route[] }> {
   const s = await db().from("stops").select("*").order("id");
   const r = await db().from("routes").select("*").order("id");
-  const stops = ((s.data as StopRow[]) ?? []).map(rowToStop);
-  const routes = ((r.data as RouteRow[]) ?? []).map(rowToRoute);
+  // A Supabase query that is REJECTED (most commonly: no Row Level Security
+  // policy letting anonymous visitors read that table) still comes back as
+  // `{ data: null, error: {...} }`, not a thrown exception. We used to
+  // ignore `.error` and fall back to `[]`, which made a rejected query look
+  // exactly like "this table is genuinely empty" - and the caller would
+  // then happily wipe every stop/route on screen with that empty list.
+  // Throwing here instead lets the existing try/catch in LiveEditor keep
+  // showing the last good data and tell the user something is wrong.
+  if (s.error) throw new Error(`Reading stops failed: ${s.error.message}`);
+  if (r.error) throw new Error(`Reading routes failed: ${r.error.message}`);
+  const stops = (s.data as StopRow[]).map(rowToStop);
+  const routes = (r.data as RouteRow[]).map(rowToRoute);
   return { stops, routes };
 }
 
