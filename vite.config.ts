@@ -5,6 +5,25 @@ import { VitePWA } from "vite-plugin-pwa";
 // Vite configuration for the visual companion dashboard (v2).
 // VitePWA makes the app installable on a phone home screen.
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        // Split big, rarely-changing third-party libraries into their own
+        // chunks. three.js (used only by the lazy-loaded 3D city view) and
+        // @supabase/supabase-js otherwise get bundled together with the rest
+        // of the app code, so every small app change forces visitors to
+        // re-download the whole heavy vendor code too. Splitting them means
+        // the browser can cache "three.js hasn't changed" separately from
+        // "the app code changed" — faster repeat visits on campus wifi.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("three")) return "vendor-three";
+          if (id.includes("@supabase")) return "vendor-supabase";
+          return "vendor";
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
