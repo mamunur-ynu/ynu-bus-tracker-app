@@ -23,7 +23,14 @@ import {
   signOut,
   currentEmail,
   onAuthChange,
+  type RealtimeStatus,
 } from "../lib/cloud";
+
+// If the realtime WebSocket can't connect (blocked network, Realtime not
+// turned on for these tables in the Supabase dashboard, etc.), fall back to
+// polling the REST API on a timer so edits from other people still show up
+// within this many milliseconds, just not instantly.
+const POLL_INTERVAL_MS = 20_000;
 import { toast } from "../lib/toast";
 
 // A self-contained interactive editor. It keeps its own data in the browser
@@ -34,6 +41,12 @@ export default function LiveEditor() {
   const [routes, setRoutes] = useState<Route[]>(() => loadRoutes());
   const [cloudOn, setCloudOn] = useState(false);
   const [cloudMsg, setCloudMsg] = useState("");
+  // Separate from cloudOn: cloudOn means "we loaded data from the cloud at
+  // least once". realtimeLive means "the live WebSocket is actually
+  // connected right now". The two used to be conflated, which made the
+  // editor claim "Cloud connected · live" even when the realtime channel had
+  // failed and no one else's edits would show up until a manual refresh.
+  const [realtimeLive, setRealtimeLive] = useState(false);
 
   // Admin login state.
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
@@ -116,14 +129,59 @@ export default function LiveEditor() {
   }, []);
 
   // Live updates: refetch from the cloud whenever anyone changes the data.
+  // If the realtime WebSocket itself never connects, we still want other
+  // people's edits to show up eventually, so we poll on a timer as a
+  // fallback instead of silently staying stale forever.
   useEffect(() => {
     if (!isCloudConfigured()) return;
-    const unsubscribe = subscribeToChanges(async () => {
-      const data = await cloudFetch();
-      setStops(data.stops);
-      setRoutes(data.routes);
-    });
-    return unsubscribe;
+
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+    let warnedOnce = false;
+
+    const refetch = async () => {
+      try {
+        const data = await cloudFetch();
+        setStops(data.stops);
+        setRoutes(data.routes);
+      } catch (e) {
+        console.warn("Poll refetch failed", e);
+      }
+    };
+
+    const startPolling = () => {
+      if (pollTimer) return;
+      pollTimer = setInterval(refetch, POLL_INTERVAL_MS);
+    };
+    const stopPolling = () => {
+      if (!pollTimer) return;
+      clearInterval(pollTimer);
+      pollTimer = undefined;
+    };
+
+    const handleStatus = (status: RealtimeStatus) => {
+      if (status === "SUBSCRIBED") {
+        setRealtimeLive(true);
+        stopPolling();
+        return;
+      }
+      // CHANNEL_ERROR / TIMED_OUT / CLOSED: the live socket isn't working.
+      // Keep the rest of the editor usable by polling instead, and tell the
+      // user once (not on every retry) so it's clear why updates feel slow.
+      setRealtimeLive(false);
+      startPolling();
+      if (!warnedOnce) {
+        warnedOnce = true;
+        toast.info(
+          "Live sync couldn't connect — updates will refresh every 20s instead. Check the Supabase project's Realtime settings if this persists."
+        );
+      }
+    };
+
+    const unsubscribe = subscribeToChanges(refetch, handleStatus);
+    return () => {
+      unsubscribe();
+      stopPolling();
+    };
   }, []);
 
   // New stop form.
@@ -332,7 +390,11 @@ export default function LiveEditor() {
       <Card
         title="Live Campus Editor"
         subtitle={
-          cloudOn ? "Cloud connected · live" : "Saved locally"
+          !cloudOn
+            ? "Saved locally"
+            : realtimeLive
+              ? "Cloud connected · live"
+              : "Cloud connected · refreshing every 20s"
         }
       >
 

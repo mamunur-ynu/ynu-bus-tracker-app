@@ -137,10 +137,29 @@ export function onAuthChange(cb: (email: string | null) => void): () => void {
   return () => data.subscription.unsubscribe();
 }
 
+// The four states Supabase's realtime-js library reports back through the
+// subscribe() callback. We re-declare the strings here (instead of importing
+// the enum) so callers don't need to know about @supabase/supabase-js types.
+export type RealtimeStatus =
+  | "SUBSCRIBED"
+  | "CHANNEL_ERROR"
+  | "TIMED_OUT"
+  | "CLOSED";
+
 // Listen for live changes on the stops and routes tables. The callback runs
 // whenever anyone inserts, updates, or deletes a row, so every open screen
 // stays in sync. Returns a function to stop listening.
-export function subscribeToChanges(onChange: () => void): () => void {
+//
+// `onStatus` reports whether the realtime WebSocket actually connected. This
+// matters because a channel can silently fail to connect (wrong Supabase
+// Realtime settings, a network/firewall that blocks WebSocket traffic, a
+// paused project, etc.) while normal HTTP calls like cloudFetch keep working
+// fine — so the UI must not claim "live" just because *some* cloud call
+// succeeded.
+export function subscribeToChanges(
+  onChange: () => void,
+  onStatus?: (status: RealtimeStatus) => void
+): () => void {
   const channel = db()
     .channel("campus-live")
     .on(
@@ -153,7 +172,9 @@ export function subscribeToChanges(onChange: () => void): () => void {
       { event: "*", schema: "public", table: "routes" },
       onChange
     )
-    .subscribe();
+    .subscribe((status) => {
+      onStatus?.(status as RealtimeStatus);
+    });
   return () => {
     db().removeChannel(channel);
   };
