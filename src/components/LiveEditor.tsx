@@ -33,20 +33,7 @@ import {
 // within this many milliseconds, just not instantly.
 const POLL_INTERVAL_MS = 20_000;
 import { toast } from "../lib/toast";
-
-// A cloud fetch can come back with an empty list for reasons that have
-// nothing to do with the campus data actually being empty - the most common
-// one being a Row Level Security policy that blocks anonymous reads on just
-// ONE of the two tables (see the comment in cloud.ts's cloudFetch). Applying
-// that blindly would wipe every stop/route off the screen for every visitor,
-// which is exactly the kind of "looks completely broken" bug that's worse
-// than any styling issue. So: only accept an empty result when we don't
-// already have something better on screen. Real admin deletions go through
-// cloudDeleteStop/cloudDeleteRoute directly and update state right away, so
-// they are never blocked by this.
-function safeApply<T>(current: T[], incoming: T[]): T[] {
-  return incoming.length > 0 || current.length === 0 ? incoming : current;
-}
+import { safeApply } from "../lib/safeApply";
 
 // A self-contained interactive editor. It keeps its own data in the browser
 // (localStorage) so changes are remembered after a reload. This is the first
