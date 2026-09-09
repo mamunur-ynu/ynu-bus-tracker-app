@@ -279,7 +279,14 @@ export default function LiveEditor() {
     };
   }, []);
 
-  function addStop() {
+  // Every write below awaits the cloud call and checks its error before
+  // claiming success. Firing the write and toasting "success" regardless
+  // (the old behaviour) is the write-side version of the read-side bug
+  // documented in CASE_STUDY.md: it told the admin their change was saved
+  // when the cloud may have silently rejected it (a paused project, a
+  // dropped connection, a policy gap), leaving the browser's local copy as
+  // the only place the edit actually existed.
+  async function addStop() {
     if (!stopName.trim()) return;
     const s: Stop = {
       id: nextStopId,
@@ -292,11 +299,17 @@ export default function LiveEditor() {
     setStops((prev) => [...prev, s]);
     setStopName("");
     setStopCn("");
-    if (isCloudConfigured()) cloudUpsertStop(s);
+    if (isCloudConfigured()) {
+      const err = await cloudUpsertStop(s);
+      if (err) {
+        toast.error(`Stop kept locally, but the cloud save failed: ${err}`);
+        return;
+      }
+    }
     toast.success(`Added stop "${s.englishName}"`);
   }
 
-  function addRoute() {
+  async function addRoute() {
     if (routeFrom === routeTo) return;
     const r: Route = {
       id: nextRouteId,
@@ -308,7 +321,13 @@ export default function LiveEditor() {
     };
     setRoutes((prev) => [...prev, r]);
     setRouteName("");
-    if (isCloudConfigured()) cloudUpsertRoute(r);
+    if (isCloudConfigured()) {
+      const err = await cloudUpsertRoute(r);
+      if (err) {
+        toast.error(`Route kept locally, but the cloud save failed: ${err}`);
+        return;
+      }
+    }
     toast.success(`Added route "${r.name}"`);
   }
 
@@ -319,7 +338,7 @@ export default function LiveEditor() {
   }
 
   // Delete a stop and any routes that touch it.
-  function deleteStop(id: number) {
+  async function deleteStop(id: number) {
     const affected = routes
       .filter((r) => r.sourceStopId === id || r.destinationStopId === id)
       .map((r) => r.id);
@@ -328,15 +347,28 @@ export default function LiveEditor() {
       prev.filter((r) => r.sourceStopId !== id && r.destinationStopId !== id)
     );
     if (isCloudConfigured()) {
-      cloudDeleteStop(id);
-      affected.forEach((rid) => cloudDeleteRoute(rid));
+      const [stopErr, ...routeErrs] = await Promise.all([
+        cloudDeleteStop(id),
+        ...affected.map((rid) => cloudDeleteRoute(rid)),
+      ]);
+      const firstError = stopErr ?? routeErrs.find((e) => e);
+      if (firstError) {
+        toast.error(`Deleted locally, but the cloud delete failed: ${firstError}`);
+        return;
+      }
     }
     toast.info("Stop deleted");
   }
 
-  function deleteRoute(id: number) {
+  async function deleteRoute(id: number) {
     setRoutes((prev) => prev.filter((r) => r.id !== id));
-    if (isCloudConfigured()) cloudDeleteRoute(id);
+    if (isCloudConfigured()) {
+      const err = await cloudDeleteRoute(id);
+      if (err) {
+        toast.error(`Deleted locally, but the cloud delete failed: ${err}`);
+        return;
+      }
+    }
     toast.info("Route deleted");
   }
 
@@ -349,7 +381,13 @@ export default function LiveEditor() {
           ...s,
           passengerCount: Math.max(0, s.passengerCount + delta),
         };
-        if (isCloudConfigured()) cloudUpsertStop(updated);
+        if (isCloudConfigured()) {
+          cloudUpsertStop(updated).then((err) => {
+            if (err) {
+              toast.error(`Passenger count kept locally, but the cloud save failed: ${err}`);
+            }
+          });
+        }
         return updated;
       })
     );
