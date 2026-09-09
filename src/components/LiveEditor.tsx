@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import Card from "./Card";
+import DataBackup from "./DataBackup";
 import type { Stop, Route } from "../data/campusData";
 import { findShortestRoute } from "../algorithms/dijkstra";
 import {
@@ -756,6 +757,15 @@ export default function LiveEditor() {
                 </p>
               )}
             </div>
+
+            <DataBackup
+              stops={stops}
+              routes={routes}
+              onImport={(s, r) => {
+                setStops(s);
+                setRoutes(r);
+              }}
+            />
 
                 <div className="rounded-xl border border-slate-700/50 bg-ink-950/40 p-3">
                   <p className="mb-2 text-sm font-medium text-slate-200">

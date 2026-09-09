@@ -7,7 +7,10 @@
 A full-stack web app with a live **3D city view**, Dijkstra route optimization, cloud database, real-time sync, admin auth, and continuous deployment — the web companion to a C++ course project at Yunnan University.
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![lighthouse](https://img.shields.io/badge/lighthouse-98-brightgreen)](#)
+[![lighthouse-performance](https://img.shields.io/badge/lighthouse_performance-94-brightgreen)](#)
+[![lighthouse-accessibility](https://img.shields.io/badge/lighthouse_accessibility-97-brightgreen)](#)
+[![lighthouse-best--practices](https://img.shields.io/badge/lighthouse_best--practices-96-brightgreen)](#)
+[![lighthouse-seo](https://img.shields.io/badge/lighthouse_seo-92-brightgreen)](#)
 [![PWA](https://img.shields.io/badge/PWA-installable-blue)](#)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)](#)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](#)
@@ -33,12 +36,15 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | Campus stops · route edges | 12 · 10 |
 | Bus lines simulated in real time | 2 (Z52, Z53) |
 | Route search | Dijkstra, computed client-side in **< 1 ms** |
-| Initial JS payload | **131 KB gzipped** — the 3D scene is a separate lazy chunk |
+| Initial JS payload | **~132 KB gzipped**, split into app / React / Supabase vendor chunks so a code change doesn't invalidate the whole cache — the 3D scene is a separate lazy chunk (135 KB gzipped, loaded only when that tab opens) |
 | Imagery | route board optimised **4.7 MB → 282 KB** (−94%) |
 | Offline | full app shell + campus imagery precached (PWA, 15 entries) |
 | Tests | 16 unit tests, run on every push by GitHub Actions |
 | Accessibility | skip link, landmarks, `aria-pressed`/`aria-current`, live regions, reduced-motion, `<html lang>` follows the toggle |
 | Languages | English + 中文, full UI toggle |
+| Data safety | admin can export/import a full JSON backup — works with zero network |
+
+*Lighthouse scores measured with the Lighthouse CLI against the production build (`npm run build && npm run preview`); real-world scores vary with network and device.*
 
 ## 🎬 Screenshots
 
@@ -65,6 +71,7 @@ Everything is backed by a real cloud database with live sync across devices, gat
 - **Real-time sync** — a change on one screen appears instantly on every other open screen.
 - **Admin auth** — only a signed-in admin can add / edit / delete; everyone else has a read-only view.
 - **Full CRUD + passenger crowding** — add and remove stops/routes and set waiting-passenger counts; the busiest stop is highlighted.
+- **JSON backup/restore** — an admin can export the full campus dataset to a file and re-import it later, so a flaky connection to the cloud never risks losing data.
 - **Bilingual EN / 中文** — a language toggle translates the whole UI; stop names are bilingual.
 - **Installable PWA** — add to a phone home screen and open it like a native app.
 - **CI/CD** — every push is built and deployed automatically.
