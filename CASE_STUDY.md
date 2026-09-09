@@ -32,6 +32,8 @@ A full-stack web application that:
 
 **Making 3D feel real, not gimmicky.** The first 3D pass looked like floating boxes. I iterated: shadows and tone mapping, buildings with lit-window canvas textures, wide asphalt roads with lane markings and green verges, street lamps, crosswalks, and traffic lights that cycle green → amber → red with a real second-countdown. I also fixed buses cutting across grass by making them retrace their route (out-and-back) so they always stay on drawn roads.
 
+**Designing for an unreliable network, not just an offline one.** My campus network (and mainland China generally) doesn't always reach services hosted abroad reliably — Netlify and Supabase included; the Great Firewall causes real packet loss and intermittent blocking, independent of anything in my code. Rather than assume the realtime WebSocket would always connect, I made the client track the actual subscription state and fall back to polling the REST API every 20 seconds when it can't — instead of showing a "connected" status that would be a lie. Combined with the PWA's offline-first shell and the localStorage fallback, the app has three real layers: realtime sync -> polling -> fully offline, so a flaky network degrades the experience instead of breaking it.
+
 **Shipping responsibly.** Only the Supabase *publishable* key lives in the client; the secret key never touches the frontend. The heavy Three.js bundle is code-split and lazy-loaded so it only downloads when the 3D tab is opened, keeping the initial load light.
 
 ## What I learned
