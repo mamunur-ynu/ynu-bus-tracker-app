@@ -286,8 +286,17 @@ export default function App() {
               </>
             )}
 
+            {/*
+              items-start on every dashboard grid.
+              CSS grid stretches every cell to the height of the tallest one
+              by default, so a short card sitting beside a long one grew a
+              huge empty tail - the route board carried about 400px of blank
+              panel, and the peak-hour timeline beside the queue list nearly
+              900px. items-start lets each card be exactly as tall as its own
+              contents.
+            */}
             {section === "routes" && (
-              <div className="grid gap-8 lg:grid-cols-2">
+              <div className="grid items-start gap-8 lg:grid-cols-2">
                 <RouteBoardReference />
                 <RouteTimeline />
               </div>
@@ -296,7 +305,7 @@ export default function App() {
             {section === "capacity" && (
               <>
                 <CapacityAlertPanel />
-                <div className="grid gap-8 lg:grid-cols-2">
+                <div className="grid items-start gap-8 lg:grid-cols-2">
                   <PassengerQueuePanel />
                   <PeakHourTimeline />
                 </div>

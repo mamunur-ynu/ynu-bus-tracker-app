@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import WeatherPanel from "./WeatherPanel";
+import RideRatingCard from "./RideRatingCard";
+import LostAndFoundCard from "./LostAndFoundCard";
+import ArrivalAlertCard from "./ArrivalAlertCard";
 import { getStop, stops } from "../data/campusData";
 import { useLang } from "../lib/i18n";
 import { useFavorites } from "../lib/favorites";
@@ -225,6 +229,9 @@ export default function StudentHome({ onTrackLive }: StudentHomeProps) {
         </div>
       </div>
 
+      {/* Weather at the stop, and whether to bring an umbrella */}
+      <WeatherPanel />
+
       {/* Favourite stops */}
       <div className="card p-5">
         <h3 className="card-title">{t("home.favourites")}</h3>
@@ -261,6 +268,15 @@ export default function StudentHome({ onTrackLive }: StudentHomeProps) {
           </div>
         )}
       </div>
+
+      {/* Get told before the bus reaches your stop */}
+      <ArrivalAlertCard />
+
+      {/* Rate the ride you just took, and see what everyone else thinks */}
+      <RideRatingCard />
+
+      {/* Left something on the bus? */}
+      <LostAndFoundCard />
 
       {/* Busiest stops, from the live passenger queues */}
       <div className="card p-5">

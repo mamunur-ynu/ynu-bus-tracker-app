@@ -399,3 +399,137 @@ export function subscribeToChanges(
     db().removeChannel(channel);
   };
 }
+
+// ---- Lost & Found ----
+//
+// Unlike driver alerts, this board is deliberately readable by anyone: the
+// student who lost a bag has to be able to search it without an account. So
+// anon holds SELECT and INSERT, and only a signed-in admin may mark an item
+// returned or take a post down.
+
+export interface LostItem {
+  id?: string;
+  /** "lost" = I lost this. "found" = I found this and handed it in. */
+  kind: "lost" | "found";
+  title: string;
+  details?: string;
+  /** Bus line code, e.g. Z52. */
+  line?: string;
+  nearStop?: number | null;
+  /** Optional, and shown publicly - the form says so. */
+  contact?: string;
+  status?: "open" | "resolved";
+  createdAt?: string;
+}
+
+interface LostItemRow {
+  id: string;
+  kind: "lost" | "found";
+  title: string;
+  details: string | null;
+  line: string | null;
+  near_stop: number | null;
+  contact: string | null;
+  status: "open" | "resolved";
+  created_at: string;
+}
+
+function rowToLostItem(r: LostItemRow): LostItem {
+  return {
+    id: r.id,
+    kind: r.kind,
+    title: r.title,
+    details: r.details ?? undefined,
+    line: r.line ?? undefined,
+    nearStop: r.near_stop,
+    contact: r.contact ?? undefined,
+    status: r.status,
+    createdAt: r.created_at,
+  };
+}
+
+export async function cloudFetchLostItems(): Promise<LostItem[]> {
+  const { data, error } = await db()
+    .from("lost_items")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(`Reading lost items failed: ${error.message}`);
+  return (data as LostItemRow[]).map(rowToLostItem);
+}
+
+/**
+ * Post a lost or found item.
+ *
+ * No .select() chained on, for the same reason as cloudRaiseAlert: it would
+ * flip the request to `return=representation`. Here anon does hold SELECT so
+ * it would not actually fail - but the row is not needed, and asking for it
+ * back would mean this call quietly depends on a read permission that has
+ * nothing to do with posting.
+ */
+export async function cloudReportLostItem(
+  item: LostItem
+): Promise<string | null> {
+  const { error } = await db().from("lost_items").insert({
+    kind: item.kind,
+    title: item.title.trim(),
+    details: item.details?.trim() || null,
+    line: item.line || null,
+    near_stop: item.nearStop ?? null,
+    contact: item.contact?.trim() || null,
+    // Not sent from here at all: the INSERT policy requires status = 'open',
+    // and letting the client name it invites a pointless rejection.
+  });
+  return error ? error.message : null;
+}
+
+export async function cloudResolveLostItem(id: string): Promise<string | null> {
+  const { error } = await db()
+    .from("lost_items")
+    .update({ status: "resolved" })
+    .eq("id", id);
+  return error ? error.message : null;
+}
+
+// ---- Ride ratings ----
+
+export interface RideRating {
+  id?: string;
+  line: string;
+  stars: number;
+  comment?: string;
+  createdAt?: string;
+}
+
+interface RideRatingRow {
+  id: string;
+  line: string;
+  stars: number;
+  comment: string | null;
+  created_at: string;
+}
+
+export async function cloudFetchRatings(): Promise<RideRating[]> {
+  const { data, error } = await db()
+    .from("ride_ratings")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(`Reading ratings failed: ${error.message}`);
+  return (data as RideRatingRow[]).map((r) => ({
+    id: r.id,
+    line: r.line,
+    stars: r.stars,
+    comment: r.comment ?? undefined,
+    createdAt: r.created_at,
+  }));
+}
+
+export async function cloudRateRide(r: RideRating): Promise<string | null> {
+  const { error } = await db().from("ride_ratings").insert({
+    line: r.line,
+    stars: r.stars,
+    comment: r.comment?.trim() || null,
+  });
+  return error ? error.message : null;
+}

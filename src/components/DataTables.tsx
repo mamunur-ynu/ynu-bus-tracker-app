@@ -15,8 +15,10 @@ const td = "px-3 py-2 text-sm text-slate-200 border-t border-slate-800";
 
 // Four data tables that match the C++ program records.
 export default function DataTables() {
+  // items-start: the stops table is much longer than the buses table, and
+  // stretching them to match left the short one with a long empty tail.
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
+    <div className="grid items-start gap-4 xl:grid-cols-2">
       <Card title="Stops">
         <div className="overflow-x-auto">
           <table className="w-full">
