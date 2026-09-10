@@ -72,7 +72,26 @@ function loadLiveBusMap(): Promise<LiveBusMapModule> {
 }
 
 const LiveBusMap = lazy(loadLiveBusMap);
+
+// The campus map on Amap. Loaded lazily like the others, and only ever
+// rendered when a key is configured - see the Live Map tab below.
+type AmapCampusModule = typeof import("./components/AmapCampus");
+
+function loadAmapCampus(): Promise<AmapCampusModule> {
+  return import("./components/AmapCampus").catch((err) => {
+    const key = "amap-campus-reload-attempted";
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, "1");
+      window.location.reload();
+      return new Promise<AmapCampusModule>(() => {});
+    }
+    throw err;
+  });
+}
+
+const AmapCampus = lazy(loadAmapCampus);
 import { useLang, type I18nKey } from "./lib/i18n";
+import { isAmapConfigured } from "./lib/amap";
 
 type Tab = "home" | "dashboard" | "live" | "map" | "ai" | "driver" | "editor";
 type Section = "overview" | "routes" | "capacity" | "data";
@@ -232,11 +251,17 @@ export default function App() {
       <OfflineBanner />
       {tab === "home" && <StudentHome onTrackLive={() => setTab("live")} />}
 
+      {/*
+        Amap when a key is configured, Leaflet otherwise. Amap has the real
+        buildings, footpaths and POI search for a Chinese campus, which
+        OpenStreetMap largely does not - but a missing key must never leave a
+        blank tab, so the working map stays as the fallback.
+      */}
       {tab === "live" && (
         <Suspense
           fallback={<div className="skeleton h-[420px] w-full rounded-2xl md:h-[520px]" />}
         >
-          <LiveBusMap />
+          {isAmapConfigured() ? <AmapCampus /> : <LiveBusMap />}
         </Suspense>
       )}
 

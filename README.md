@@ -40,7 +40,7 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | Initial JS payload | **~132 KB gzipped**, split into app / React / Supabase vendor chunks so a code change doesn't invalidate the whole cache — the 3D scene is a separate lazy chunk (135 KB gzipped, loaded only when that tab opens) |
 | Imagery | route board optimised **4.7 MB → 282 KB** (−94%) |
 | Offline | full app shell + campus imagery precached (PWA, 15 entries) |
-| Tests | 221 unit tests, run on every push by GitHub Actions |
+| Tests | 233 unit tests, run on every push by GitHub Actions |
 | Accessibility | skip link, landmarks, `aria-pressed`/`aria-current`, live regions, reduced-motion, `<html lang>` follows the toggle |
 | Languages | English + 中文, full UI toggle |
 | Data safety | admin can export/import a full JSON backup — works with zero network |
@@ -63,6 +63,7 @@ reader to guess which is which, here is the line, drawn explicitly.
 | Driver GPS | `navigator.geolocation.watchPosition` — the device's actual GPS, including real speed, heading and accuracy. No synthetic path. |
 | Weather | Live measurements from Open-Meteo. Labelled **Kunming**, not "campus", because the API answers for a city coordinate and there is no sensor on campus. |
 | Ratings and Lost & Found | Real rows written to, and read from, the database by anyone using the app. |
+| Campus map, POI search, walking directions | Amap (高德地图) — real YNU buildings, roads, footpaths and its own POI database, in Chinese. Enabled by setting an Amap key; without one the app falls back to Leaflet/OpenStreetMap. |
 
 ### Simulated, and labelled as such in the UI
 
@@ -87,6 +88,7 @@ whether the code works.
 | Lost & Found | **0** items posted. |
 | Ride ratings | **0** ratings submitted. |
 | Driver accounts | **1** account exists, used for both admin and driver testing. |
+| The Amap integration | Written, type-checked and building, but **never run against the real Amap API** — `webapi.amap.com` is unreachable from the machines it was developed on, and no Amap key exists yet. The no-key fallback and the load-failure path were both tested in a browser; the map, search and walking directions themselves have not been. |
 
 The honest next step for this project is not another feature — it is carrying a
 phone along a route to put the first real GPS point in the database.
@@ -181,6 +183,32 @@ Example for Groq: `AI_API_KEY=<key>`, `AI_BASE_URL=https://api.groq.com/openai/v
 
 The key is only read inside the serverless function — it never reaches the browser. Without any key the assistant automatically falls back to a local rule-based parser that still computes real routes.
 
+### Campus map (Amap 高德地图)
+
+Copy `.env.example` to `.env` and fill in an Amap key to switch the Live Map
+tab from OpenStreetMap to Amap's real campus map, with POI search and walking
+directions:
+
+| Variable | Where it comes from |
+|---|---|
+| `VITE_AMAP_KEY` | lbs.amap.com → 控制台 → 应用管理 → 创建新应用 → 添加 Key, service type **Web端(JS API)** |
+| `VITE_AMAP_SECURITY_CODE` | the 安全密钥 shown next to that key |
+
+Registering needs a Chinese phone number and real-name verification. Both
+values end up in the built JavaScript — that is how Amap's browser API works,
+so restrict the key to your own domain in their console.
+
+Two things worth knowing:
+
+- **Coordinates.** Amap renders in GCJ-02 while GPS and this project's stored
+  data are WGS-84. Inside China those differ by 100–700 m, so every coordinate
+  is converted on the way in and out (`src/lib/gcj02.ts`). Skipping that
+  silently draws every bus a few streets from where it is.
+- **Bus stops need real coordinates.** Amap will show the campus perfectly
+  well without them, but the bus layer — stops, routes, nearest stop, ETA —
+  stays empty until each stop's latitude and longitude is captured on site in
+  the Live Editor tab. The map says so rather than looking broken.
+
 ```bash
 npm run build      # production build → dist/
 npm run preview    # preview the production build
@@ -205,12 +233,15 @@ src/
     DriverConsole.tsx     driver sign-in, trip start, GPS broadcast
     StudentHome.tsx       rider home: next bus, weather, alerts, ratings
     WeatherPanel.tsx      Open-Meteo conditions and riding advice
+    AmapCampus.tsx        Amap campus map, POI search, walking directions
   data/campusData.ts      stops, routes, bus lines
   lib/
     arrivals.ts           one shared simulation clock for every screen
     traffic.ts            signal phases + the rules a bus obeys (tested)
     geo.ts                haversine, bearing, ETA from distance and speed
     weather.ts            Open-Meteo fetch and defensive parsing
+    amap.ts               Amap JS API loader and typed surface
+    gcj02.ts              WGS-84 <-> GCJ-02 conversion (tested)
     ratings.ts            per-line averages and the rating cooldown
     notify.ts             when an arrival alert may and may not fire
     cloud.ts              Supabase access for every table

@@ -230,6 +230,31 @@ const dict = {
   "common.simulation": { en: "simulation", zh: "模拟" },
   "map.simconnector": { en: "Simulation connector", zh: "模拟连接线" },
   "skip.main": { en: "Skip to main content", zh: "跳到主要内容" },
+
+  // ---- Amap campus map ----
+  "amap.title": { en: "Campus map", zh: "校园地图" },
+  "amap.searchph": {
+    en: "Search a building, dorm or canteen…",
+    zh: "搜索教学楼、宿舍或食堂…",
+  },
+  "amap.search": { en: "Search", zh: "搜索" },
+  "amap.searching": { en: "Searching…", zh: "搜索中…" },
+  "amap.walkto": { en: "Walk to", zh: "步行至" },
+  "amap.nextbus": { en: "Nearest bus", zh: "最近的车" },
+  "amap.loading": { en: "Loading the campus map…", zh: "正在加载校园地图…" },
+  "amap.failed": {
+    en: "The campus map could not load.",
+    zh: "校园地图加载失败。",
+  },
+  "amap.placed": { en: "stops placed on the map", zh: "个站点已定位" },
+  "amap.nostops": {
+    en: "No bus stop has real coordinates yet, so none can be drawn on this map.",
+    zh: "尚未采集任何站点的真实坐标，因此地图上无法显示站点。",
+  },
+  "amap.nostops.how": {
+    en: "Open the Live Editor tab, stand at each stop and press Capture. Distances, ETAs and nearest-stop search all depend on those readings.",
+    zh: "打开「实时编辑器」，在每个站点旁点击采集。距离、到站时间和最近站点搜索都依赖这些数据。",
+  },
   "queue.empty": {
     en: "No passengers waiting anywhere on campus right now.",
     zh: "当前校园各站点均无人候车。",
