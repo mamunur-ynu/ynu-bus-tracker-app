@@ -114,6 +114,42 @@ const dict = {
   "fleet.outstatus": { en: "Off road", zh: "停运" },
   "fleet.empty": { en: "No buses in the fleet yet.", zh: "车队暂无车辆。" },
   "fleet.nodriver": { en: "No driver assigned", zh: "未分配司机" },
+  "tab.driver": { en: "Driver", zh: "司机端" },
+  "driver.title": { en: "Driver console", zh: "司机控制台" },
+  "driver.subtitle": { en: "Simulated position", zh: "模拟位置" },
+  "driver.pick": { en: "Select your bus", zh: "选择你的车辆" },
+  "driver.nobus": { en: "No buses in the fleet.", zh: "车队暂无车辆。" },
+  "driver.start": { en: "Start trip", zh: "开始行程" },
+  "driver.end": { en: "End trip", zh: "结束行程" },
+  "driver.onshift": { en: "On trip", zh: "行驶中" },
+  "driver.offshift": { en: "Not started", zh: "未开始" },
+  "driver.nextstop": { en: "Next stop", zh: "下一站" },
+  "driver.progress": { en: "Trip progress", zh: "行程进度" },
+  "driver.elapsed": { en: "Elapsed", zh: "已用时" },
+  "driver.arrived": { en: "Trip complete", zh: "行程结束" },
+  "driver.boarding": { en: "Passengers on board", zh: "在车人数" },
+  "driver.savedcloud": { en: "Saved to the cloud", zh: "已保存到云端" },
+  "driver.localonly": {
+    en: "Kept on this device only — sign in as admin to save the count.",
+    zh: "仅保存在本机 —— 需管理员登录后才能保存人数。",
+  },
+  "driver.emergency": { en: "Emergency alert", zh: "紧急报警" },
+  "driver.emergency.hint": {
+    en: "Sends your bus, line and nearest stop to the campus admin.",
+    zh: "将车辆、线路和最近站点发送给校方管理员。",
+  },
+  "driver.emergency.sent": { en: "Alert sent to campus admin", zh: "已向管理员发送警报" },
+  "driver.emergency.failed": {
+    en: "Alert could NOT be sent — no connection. Call campus security directly.",
+    zh: "警报发送失败 —— 无网络连接。请直接致电校园保卫处。",
+  },
+  "driver.simnote": {
+    en: "Position is modelled from the timetable, not satellite GPS.",
+    zh: "位置基于时刻表推算，并非卫星定位。",
+  },
+  "alerts.title": { en: "Emergency alerts", zh: "紧急警报" },
+  "alerts.none": { en: "No open alerts.", zh: "暂无警报。" },
+  "alerts.clear": { en: "Clear", zh: "清除" },
 } as const;
 
 export type I18nKey = keyof typeof dict;

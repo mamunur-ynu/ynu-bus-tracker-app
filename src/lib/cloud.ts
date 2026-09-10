@@ -160,6 +160,68 @@ export async function cloudDeleteBus(id: number): Promise<string | null> {
   return error ? error.message : null;
 }
 
+// ---- Driver emergency alerts ----
+// The one table with an asymmetric policy: an anonymous driver console may
+// INSERT (raise an alert) but may not SELECT, so the table can never be read
+// back by a stranger to trace where buses and drivers are. Only a signed-in
+// admin can list or clear them.
+export interface DriverAlert {
+  id?: number;
+  busId: number | null;
+  plateNumber: string;
+  driverName?: string;
+  line?: string;
+  nearStop?: string;
+  note?: string;
+  raisedAt?: string;
+}
+
+// DO NOT chain .select() onto this insert.
+//
+// A driver is anonymous, and this table deliberately grants anon INSERT but
+// not SELECT. supabase-js sends `Prefer: return=minimal` when you don't ask
+// for the row back, which the database accepts (201). Adding .select() flips
+// it to `return=representation`, which asks to read the row straight back -
+// and that is refused with 401 for an anonymous caller. I checked both shapes
+// against the real API rather than assuming. The trap is that it would still
+// work perfectly while testing signed in as admin, and fail only for the
+// actual drivers, which is the one case that matters here.
+export async function cloudRaiseAlert(a: DriverAlert): Promise<string | null> {
+  const { error } = await db().from("driver_alerts").insert({
+    bus_id: a.busId,
+    plate_number: a.plateNumber,
+    driver_name: a.driverName ?? null,
+    line: a.line ?? null,
+    near_stop: a.nearStop ?? null,
+    note: a.note ?? null,
+  });
+  return error ? error.message : null;
+}
+
+/** Admin only: an anonymous caller gets a permission error, by design. */
+export async function cloudFetchAlerts(): Promise<DriverAlert[]> {
+  const { data, error } = await db()
+    .from("driver_alerts")
+    .select("*")
+    .order("raised_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data as Record<string, unknown>[]).map((r) => ({
+    id: r.id as number,
+    busId: (r.bus_id as number) ?? null,
+    plateNumber: r.plate_number as string,
+    driverName: (r.driver_name as string) ?? undefined,
+    line: (r.line as string) ?? undefined,
+    nearStop: (r.near_stop as string) ?? undefined,
+    note: (r.note as string) ?? undefined,
+    raisedAt: r.raised_at as string,
+  }));
+}
+
+export async function cloudClearAlert(id: number): Promise<string | null> {
+  const { error } = await db().from("driver_alerts").delete().eq("id", id);
+  return error ? error.message : null;
+}
+
 export async function cloudSeed(
   stops: Stop[],
   routes: Route[]

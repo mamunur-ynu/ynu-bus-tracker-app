@@ -4,11 +4,14 @@ import { busLines, type Bus } from "../data/campusData";
 import { useLang } from "../lib/i18n";
 import { toast } from "../lib/toast";
 import {
+  cloudClearAlert,
   cloudDeleteBus,
+  cloudFetchAlerts,
   cloudUpsertBus,
   currentEmail,
   isCloudConfigured,
   onAuthChange,
+  type DriverAlert,
 } from "../lib/cloud";
 import { busLoad, fleetSummary, nextBusId, useFleet } from "../lib/fleet";
 
@@ -35,6 +38,8 @@ export default function FleetPanel() {
   const [line, setLine] = useState(busLines[0]?.code ?? "Z52");
   const [seats, setSeats] = useState(40);
 
+  const [alerts, setAlerts] = useState<DriverAlert[]>([]);
+
   useEffect(() => {
     currentEmail().then(setAdminEmail);
     const unsub = onAuthChange(setAdminEmail);
@@ -42,6 +47,37 @@ export default function FleetPanel() {
   }, []);
 
   const isAdmin = adminEmail !== null;
+
+  // Emergency alerts are readable only by a signed-in admin - the database
+  // refuses the query for anyone else - so only fetch them once signed in,
+  // and poll while the panel is open so a new one turns up without a refresh.
+  useEffect(() => {
+    if (!isAdmin || !isCloudConfigured()) {
+      setAlerts([]);
+      return;
+    }
+    let live = true;
+    const load = async () => {
+      try {
+        const rows = await cloudFetchAlerts();
+        if (live) setAlerts(rows);
+      } catch {
+        /* not signed in yet, or offline: leave the list as it is */
+      }
+    };
+    void load();
+    const id = window.setInterval(load, 15000);
+    return () => {
+      live = false;
+      window.clearInterval(id);
+    };
+  }, [isAdmin]);
+
+  async function clearAlert(id: number) {
+    setAlerts((prev) => prev.filter((a) => a.id !== id));
+    const err = await cloudClearAlert(id);
+    if (err) toast.error(`Could not clear the alert: ${err}`);
+  }
   const summary = fleetSummary(fleet);
 
   async function addBus() {
@@ -122,6 +158,50 @@ export default function FleetPanel() {
           </div>
         ))}
       </div>
+
+      {/* Emergency alerts raised from the driver console. Admin-only: the
+          database will not return these rows to anyone else. */}
+      {isAdmin && (
+        <div className="mt-5 rounded-xl border border-rose-500/30 bg-rose-500/[0.07] p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-rose-300">
+            {t("alerts.title")}
+          </p>
+          {alerts.length === 0 ? (
+            <p className="mt-2 text-xs text-slate-400">{t("alerts.none")}</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {alerts.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-rose-500/25 bg-ink-950/40 px-3 py-2 text-xs"
+                >
+                  <span className="font-semibold text-rose-200">
+                    {a.plateNumber}
+                  </span>
+                  {a.line && <span className="text-slate-400">{a.line}</span>}
+                  {a.driverName && (
+                    <span className="text-slate-300">{a.driverName}</span>
+                  )}
+                  {a.nearStop && (
+                    <span className="text-slate-400">· {a.nearStop}</span>
+                  )}
+                  {a.raisedAt && (
+                    <span className="text-slate-500">
+                      {new Date(a.raisedAt).toLocaleTimeString()}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => a.id !== undefined && clearAlert(a.id)}
+                    className="ml-auto rounded-lg border border-slate-600 px-2 py-0.5 text-[11px] text-slate-300"
+                  >
+                    {t("alerts.clear")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* The fleet itself */}
       <div className="mt-5 space-y-2">

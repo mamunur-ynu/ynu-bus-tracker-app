@@ -16,6 +16,7 @@ import LiveEditor from "./components/LiveEditor";
 import AIAssistant from "./components/AIAssistant";
 import StudentHome from "./components/StudentHome";
 import FleetPanel from "./components/FleetPanel";
+import DriverConsole from "./components/DriverConsole";
 import Toaster from "./components/Toaster";
 
 // The 3D city pulls in three.js, so load it only when its tab is opened.
@@ -54,7 +55,7 @@ function loadMiniCity3D(): Promise<MiniCity3DModule> {
 const MiniCity3D = lazy(loadMiniCity3D);
 import { useLang, type I18nKey } from "./lib/i18n";
 
-type Tab = "home" | "dashboard" | "map" | "ai" | "editor";
+type Tab = "home" | "dashboard" | "map" | "ai" | "driver" | "editor";
 type Section = "overview" | "routes" | "capacity" | "data";
 
 const sections: {
@@ -114,6 +115,11 @@ const tabs: { id: Tab; labelKey: I18nKey; d: string }[] = [
     id: "ai",
     labelKey: "tab.ai",
     d: "M12 3a4 4 0 0 1 4 4v.2A2.8 2.8 0 0 1 18.8 10v5.2A2.8 2.8 0 0 1 16 18H8a2.8 2.8 0 0 1-2.8-2.8V10A2.8 2.8 0 0 1 8 7.2V7a4 4 0 0 1 4-4zM9.5 12h.01m4.99 0h.01",
+  },
+  {
+    id: "driver",
+    labelKey: "tab.driver",
+    d: "M5 17h14M6 17V9.5L7.5 5h9L18 9.5V17M8.5 9h7M8 13h.01M16 13h.01M7 17v2H5.5v-2M17 17v2h1.5v-2",
   },
   {
     id: "editor",
@@ -203,6 +209,8 @@ export default function App() {
       )}
 
       {tab === "ai" && <AIAssistant />}
+
+      {tab === "driver" && <DriverConsole />}
 
       {tab === "editor" && (
         <div className="space-y-8">
