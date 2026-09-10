@@ -107,11 +107,28 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 const CLAUDE_MODEL = "claude-sonnet-5";
 const MAX_TURNS = 4;
 
+// Live arrival times, computed by the CLIENT and sent with the question.
+//
+// The obvious alternative - mirroring the arrivals simulation in here, the way
+// Dijkstra is mirrored above - was the wrong call twice over: this function is
+// never sent the bus-line definitions it would need, and a second copy of the
+// timing maths is exactly how the assistant would start quoting a different
+// ETA from the one on the rider's screen. The client already has the one
+// engine and knows what "now" is, so it does the sum and passes the answer.
+interface ArrivalInfo {
+  stopId: number;
+  stopName: string;
+  lineName: string;
+  lineCode: string;
+  minutes: number;
+}
+
 interface Body {
   question: string;
   stops: Stop[];
   routes: Route[];
   lang?: "en" | "zh";
+  arrivals?: ArrivalInfo[];
 }
 
 const TOOL_NAME = "find_route";
@@ -126,20 +143,32 @@ const TOOL_PARAMS = {
   required: ["from_stop_id", "to_stop_id"],
 };
 
-function systemPrompt(stops: Stop[], lang: string) {
+function systemPrompt(stops: Stop[], lang: string, arrivals: ArrivalInfo[] = []) {
   const list = stops
     .map(
       (s) =>
         `${s.id}: ${s.englishName} (${s.chineseName}), ${s.passengerCount} waiting`
     )
     .join("\n");
-  return `You are the assistant for the Yunnan University Smart Campus Bus Tracker.
+
+  const arrivalBlock = arrivals.length
+    ? `\nNext bus at each stop, right now:\n${arrivals
+        .map(
+          (a) =>
+            `${a.stopId}: ${a.stopName} — ${a.lineName} (${a.lineCode}) in ${a.minutes} min`
+        )
+        .join("\n")}\n`
+    : "";
+
+  return `You are the assistant for YNU Smart Mobility, the Yunnan University campus shuttle app.
 
 Campus stops (id: English (Chinese), waiting passengers):
 ${list}
-
+${arrivalBlock}
 Rules:
-- To answer any travel or "how long" question you MUST call the ${TOOL_NAME} tool. Never guess travel times.
+- To answer any travel or "how long to get from A to B" question you MUST call the ${TOOL_NAME} tool. Never guess travel times.
+- For "when is the next bus" / "when will it arrive" questions, use the "Next bus at each stop" list above. Do NOT call ${TOOL_NAME} for those, and do not guess a time that is not in that list. If the list is empty, say you cannot see live arrivals right now.
+- Never state a distance in metres or kilometres. The app does not track real bus positions, so any distance would be made up.
 - Match stop names loosely (English or Chinese, partial names are fine) and map them to stop ids.
 - Reply in the same language the user wrote in. If unsure, use ${lang}.
 - Be brief and friendly: give the total minutes and the stop sequence.
@@ -183,10 +212,10 @@ async function askOpenAICompatible(
   model: string,
   body: Body
 ): Promise<string> {
-  const { question, stops, routes, lang = "en" } = body;
+  const { question, stops, routes, lang = "en", arrivals = [] } = body;
   const url = `${baseUrl.replace(/\/$/, "")}/chat/completions`;
   const messages: unknown[] = [
-    { role: "system", content: systemPrompt(stops, lang) },
+    { role: "system", content: systemPrompt(stops, lang, arrivals) },
     { role: "user", content: question },
   ];
 
@@ -246,7 +275,7 @@ async function askOpenAICompatible(
 // ---------------------------------------------------------------- Gemini ----
 
 async function askGemini(key: string, body: Body): Promise<string> {
-  const { question, stops, routes, lang = "en" } = body;
+  const { question, stops, routes, lang = "en", arrivals = [] } = body;
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
   const contents: unknown[] = [{ role: "user", parts: [{ text: question }] }];
 
@@ -255,7 +284,7 @@ async function askGemini(key: string, body: Body): Promise<string> {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt(stops, lang) }] },
+        system_instruction: { parts: [{ text: systemPrompt(stops, lang, arrivals) }] },
         contents,
         tools: [
           {
@@ -310,7 +339,7 @@ async function askGemini(key: string, body: Body): Promise<string> {
 // ---------------------------------------------------------------- Claude ----
 
 async function askClaude(key: string, body: Body): Promise<string> {
-  const { question, stops, routes, lang = "en" } = body;
+  const { question, stops, routes, lang = "en", arrivals = [] } = body;
   const messages: unknown[] = [{ role: "user", content: question }];
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
@@ -324,7 +353,7 @@ async function askClaude(key: string, body: Body): Promise<string> {
       body: JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: 600,
-        system: systemPrompt(stops, lang),
+        system: systemPrompt(stops, lang, arrivals),
         tools: [
           { name: TOOL_NAME, description: TOOL_DESC, input_schema: TOOL_PARAMS },
         ],

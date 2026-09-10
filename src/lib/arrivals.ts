@@ -65,6 +65,24 @@ export function buildLineModels(): LineModel[] {
   });
 }
 
+/**
+ * The simulation clock, anchored to wall-clock time.
+ *
+ * Every screen MUST get its elapsed seconds from here. Each screen used to
+ * start its own clock when it mounted (`Date.now()` captured in a ref), which
+ * quietly meant two screens disagreed about where the same bus was: open the
+ * Home screen, wait five minutes, switch to the arrivals board, and one said
+ * the Library bus was 19 minutes away while the other said 11. Sharing the
+ * ETA *maths* was not enough - they have to share the *clock* too.
+ *
+ * Anchoring to the Unix epoch rather than to any mount time also means the
+ * buses stay where they were across a page reload, and two people looking at
+ * two phones see the same thing.
+ */
+export function simElapsedSec(now: number = Date.now()): number {
+  return now / 1000;
+}
+
 /** Where the bus is on its loop right now, in route-minutes from the first stop. */
 export function loopPosition(line: LineModel, elapsedSec: number): number {
   return (elapsedSec * SIM_MIN_PER_SEC) % line.loopTotal;

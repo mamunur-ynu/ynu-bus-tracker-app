@@ -1,18 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Card from "./Card";
 import { getStop } from "../data/campusData";
 import { useLang } from "../lib/i18n";
 import { useFavorites } from "../lib/favorites";
 // The loop timing and ETA maths now live in one shared module so this board
 // and the Home screen's "next bus" card can never drift apart.
-import { arrivalsFor, buildLineModels, mmss } from "../lib/arrivals";
+import { arrivalsFor, buildLineModels, mmss, simElapsedSec } from "../lib/arrivals";
 
 // A simulated live-arrivals board. Each bus line runs a bus around its
 // route-board loop; the ETA to every stop counts down in real time.
 export default function LiveArrivals() {
   const { t, lang } = useLang();
   const { favorites } = useFavorites();
-  const startRef = useRef<number>(Date.now());
   const [, force] = useState(0);
 
   // Re-render on a steady tick so the countdowns move.
@@ -26,7 +25,8 @@ export default function LiveArrivals() {
 
   const models = useMemo(() => buildLineModels(), []);
 
-  const elapsedSec = (Date.now() - startRef.current) / 1000;
+  // Wall-clock, not "since this board opened", so every screen agrees.
+  const elapsedSec = simElapsedSec();
 
   const stopLabel = (id: number) => {
     const s = getStop(id);

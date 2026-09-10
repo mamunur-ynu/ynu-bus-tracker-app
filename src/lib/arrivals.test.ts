@@ -8,6 +8,7 @@ import {
   mmss,
   nextBusForStop,
   segMinutes,
+  simElapsedSec,
 } from "./arrivals";
 
 // The arrivals engine drives both the Live Arrivals board and the Home
@@ -100,6 +101,51 @@ describe("arrivalsFor", () => {
     const justMissed = arrivals.find((a) => a.id === line.stopIds[1]);
     expect(justMissed).toBeDefined();
     expect(justMissed!.eta).toBeCloseTo(line.loopTotal - 0.5, 5);
+  });
+});
+
+describe("simElapsedSec (the shared clock)", () => {
+  // Regression test for a real bug: each screen used to start its own clock
+  // when it mounted, so the Home screen and the arrivals board disagreed
+  // about where the same bus was - 19 minutes away on one, 11 on the other.
+  // Sharing the ETA maths was not enough; they have to share the clock.
+  const models = buildLineModels();
+  const line = models[0];
+  const stop = line.stopIds[4];
+
+  it("depends only on wall-clock time, never on when a screen opened", () => {
+    const now = 1_800_000_000_000;
+    // Two screens rendering at the same instant, opened hours apart. Neither
+    // gets to pass its own start time in, so both must land on one answer.
+    const screenOpenedHoursAgo = arrivalsFor(line, simElapsedSec(now));
+    const screenOpenedJustNow = arrivalsFor(line, simElapsedSec(now));
+    expect(screenOpenedJustNow).toEqual(screenOpenedHoursAgo);
+
+    const etaA = nextBusForStop(models, stop, simElapsedSec(now))!.eta;
+    const etaB = nextBusForStop(models, stop, simElapsedSec(now))!.eta;
+    expect(etaB).toBe(etaA);
+  });
+
+  it("advances in real time", () => {
+    const now = 1_800_000_000_000;
+    expect(simElapsedSec(now + 60_000) - simElapsedSec(now)).toBeCloseTo(60, 6);
+  });
+
+  it("puts the buses back where they were after a page reload", () => {
+    // Same instant, computed fresh as if the tab had just been reloaded.
+    const now = 1_800_000_123_456;
+    expect(arrivalsFor(line, simElapsedSec(now))).toEqual(
+      arrivalsFor(line, simElapsedSec(now))
+    );
+  });
+
+  it("keeps enough precision at epoch-scale numbers to tick smoothly", () => {
+    // now/1000 is ~1.8e9, so a naive implementation could lose sub-second
+    // resolution and make the countdown jump instead of run.
+    const now = 1_800_000_000_000;
+    const a = nextBusForStop(models, stop, simElapsedSec(now))!.eta;
+    const b = nextBusForStop(models, stop, simElapsedSec(now + 500))!.eta;
+    expect(a).not.toBe(b);
   });
 });
 

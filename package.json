@@ -9,7 +9,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && npm run typecheck:functions",
+    "typecheck:functions": "tsc --noEmit --target es2022 --module esnext --moduleResolution bundler --skipLibCheck --strict netlify/functions/*.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

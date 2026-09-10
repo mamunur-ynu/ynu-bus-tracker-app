@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getStop, stops } from "../data/campusData";
 import { useLang } from "../lib/i18n";
 import { useFavorites } from "../lib/favorites";
@@ -8,6 +8,7 @@ import {
   minutesLeft,
   mmss,
   nextBusForStop,
+  simElapsedSec,
   type LineModel,
 } from "../lib/arrivals";
 
@@ -29,7 +30,6 @@ export default function StudentHome({ onTrackLive }: StudentHomeProps) {
   const { favorites, toggleFavorite } = useFavorites();
   // Same fleet the admin panel edits, so a capacity change shows up here too.
   const { fleet } = useFleet();
-  const startRef = useRef<number>(Date.now());
   const [, force] = useState(0);
 
   // Re-render on a steady tick so the countdown actually counts down.
@@ -42,7 +42,8 @@ export default function StudentHome({ onTrackLive }: StudentHomeProps) {
   }, []);
 
   const models: LineModel[] = useMemo(() => buildLineModels(), []);
-  const elapsedSec = (Date.now() - startRef.current) / 1000;
+  // Wall-clock, not "since this screen opened", so every screen agrees.
+  const elapsedSec = simElapsedSec();
 
   const stopLabel = (id: number) => {
     const s = getStop(id);
