@@ -4,6 +4,15 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import Card from "./Card";
 import { stops, routes, busLines, getStop } from "../data/campusData";
 import { useLang } from "../lib/i18n";
+// The signal timing and the bus-driving rules live in one tested module, so
+// the lamp you see and the bus obeying it can never disagree.
+import {
+  type BusState,
+  type Phase,
+  easeHeading,
+  phaseOf,
+  stepBus,
+} from "../lib/traffic";
 
 const SIZE = 44;
 
@@ -572,7 +581,9 @@ export default function MiniCity3D() {
       emissiveIntensity: 0.35,
     });
     const tlBoxMat = new THREE.MeshStandardMaterial({ color: 0x0e131c });
+
     interface Signal {
+      stopId: number;
       red: THREE.Mesh;
       amber: THREE.Mesh;
       green: THREE.Mesh;
@@ -582,6 +593,8 @@ export default function MiniCity3D() {
       lastKey: string;
     }
     const signals: Signal[] = [];
+    // stop id -> its signal, so a bus can look up the light where it is halted.
+    const signalAt = new Map<number, Signal>();
     const drawCount = (
       ctx: CanvasRenderingContext2D,
       tex: THREE.CanvasTexture,
@@ -701,7 +714,20 @@ export default function MiniCity3D() {
       );
       scene.add(board);
 
-      if (ctx) signals.push({ red, amber, green, offset: k * 3.4, ctx, tex, lastKey: "" });
+      if (ctx) {
+        const sig: Signal = {
+          stopId: sid,
+          red,
+          amber,
+          green,
+          offset: k * 3.4,
+          ctx,
+          tex,
+          lastKey: "",
+        };
+        signals.push(sig);
+        signalAt.set(sid, sig);
+      }
     });
 
     /*
@@ -860,15 +886,32 @@ export default function MiniCity3D() {
       }
     });
 
-    // Buses on each line's loop
+    /*
+     * Buses on each line's loop.
+     *
+     * The old version computed a position straight from elapsed time, which
+     * meant the bus teleported from full speed to a dead stop and back, took
+     * corners by snapping its heading instantly, and - having no state of its
+     * own - had no way to react to anything, least of all a red light.
+     *
+     * So a bus now has a speed and gets driven: it accelerates away from a
+     * stop, brakes on a curve into the next one, turns towards the new
+     * direction over a few frames rather than in one, and stays put at a
+     * junction until the light actually goes green.
+     */
     interface Rig {
       mesh: THREE.Group;
       pts: THREE.Vector3[];
+      /** The stop id at each point of the path, for looking up its signal. */
+      nodeStops: number[];
       cum: number[];
       total: number;
-      speed: number;
-      dwell: number;
-      offsetTime: number;
+      cruise: number;
+      /** Position, speed and where it is in its route - see lib/traffic. */
+      state: BusState;
+      /** Facing, eased towards the direction of travel. */
+      heading: number;
+      brakeLights: THREE.Mesh[];
     }
     const rigs: Rig[] = [];
     const glowTex = radialTexture();
@@ -879,15 +922,20 @@ export default function MiniCity3D() {
       emissiveIntensity: 2,
     });
     busLines.forEach((line, li) => {
-      const base = line.stopIds
-        .map((id) => getStop(id))
-        .filter((s): s is (typeof stops)[number] => Boolean(s))
-        .map((s) => worldOf(s.x, s.y));
-      if (base.length < 2) return;
+      const served = line.stopIds.filter((id) => getStop(id));
+      if (served.length < 2) return;
       // Out-and-back so the bus always stays on drawn roads (the last stop
       // has no road back to the first, so we retrace instead of teleporting).
-      const backHalf = base.slice(1, -1).reverse();
-      const pts = base.concat(backHalf, [base[0].clone()]);
+      // The stop ids are carried along the same path, because the bus needs to
+      // know *which* stop each node is to find the traffic light there.
+      const nodeStops = served.concat(
+        served.slice(1, -1).reverse(),
+        served[0]
+      );
+      const pts = nodeStops.map((id) => {
+        const s = getStop(id)!;
+        return worldOf(s.x, s.y);
+      });
       const cum = [0];
       let total = 0;
       for (let i = 1; i < pts.length; i++) {
@@ -982,50 +1030,87 @@ export default function MiniCity3D() {
         hl.position.set(3.2, 1, hz);
         g.add(hl);
       }
+      // Brake lights: the clearest way to show that a bus is waiting on
+      // purpose rather than simply frozen.
+      const brakeLights: THREE.Mesh[] = [];
+      for (const hz of [-0.8, 0.8]) {
+        const bl = new THREE.Mesh(
+          new THREE.BoxGeometry(0.14, 0.3, 0.4),
+          new THREE.MeshStandardMaterial({
+            color: 0x6b0f12,
+            emissive: 0xff2d2d,
+            emissiveIntensity: 0,
+          })
+        );
+        bl.position.set(-3.22, 1.15, hz);
+        g.add(bl);
+        brakeLights.push(bl);
+      }
       scene.add(g);
 
       rigs.push({
         mesh: g,
         pts,
+        nodeStops,
         cum,
         total,
-        speed: total / (16 + li * 5),
-        dwell: 1.6,
-        offsetTime: li * 7,
+        // Slower on the second line, so the two are visibly different buses
+        // rather than one animation drawn twice.
+        cruise: 7.5 - li * 1.2,
+        state: {
+          // Spread the buses out along their routes at the start.
+          s: (total * li) / Math.max(1, busLines.length),
+          v: 0,
+          node: 1,
+          halted: false,
+          wait: 0,
+        },
+        heading: 0,
+        brakeLights,
       });
     });
 
-    // Move a bus, pausing (dwelling) briefly at each stop.
-    function placeBus(r: Rig, el: number) {
-      const nStops = r.pts.length - 1;
-      const travelTime = r.total / r.speed;
-      const period = travelTime + nStops * r.dwell;
-      let e = (r.offsetTime + el) % period;
-      const face = (a: THREE.Vector3, b: THREE.Vector3) => {
-        r.mesh.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x);
-      };
-      for (let i = 0; i < nStops; i++) {
-        const a = r.pts[i];
-        const b = r.pts[i + 1];
-        if (e < r.dwell) {
-          r.mesh.position.set(a.x, 0, a.z);
-          face(a, b);
-          return;
-        }
-        e -= r.dwell;
-        const segLen = r.cum[i + 1] - r.cum[i] || 1;
-        const tSeg = segLen / r.speed;
-        if (e < tSeg) {
-          const tt = e / tSeg;
-          r.mesh.position.set(
-            a.x + (b.x - a.x) * tt,
-            0,
-            a.z + (b.z - a.z) * tt
-          );
-          face(a, b);
-          return;
-        }
-        e -= tSeg;
+    // Put each bus on the right segment for the starting offset above.
+    for (const r of rigs) {
+      while (r.state.node < r.cum.length - 1 && r.cum[r.state.node] < r.state.s)
+        r.state.node++;
+    }
+
+    // Where a stop has a traffic light, its offset; null where it has none.
+    const offsetForStop = (stopId: number) =>
+      signalAt.get(stopId)?.offset ?? null;
+
+    /** Advance one bus and put its mesh where the simulation says it is. */
+    function driveBus(r: Rig, dt: number, el: number) {
+      stepBus(
+        r.state,
+        { cum: r.cum, nodeStops: r.nodeStops },
+        r.cruise,
+        dt,
+        el,
+        offsetForStop
+      );
+
+      // Position along the segment the bus is currently on.
+      const i = r.state.node - 1;
+      const a = r.pts[i];
+      const b = r.pts[i + 1];
+      const segLen = r.cum[i + 1] - r.cum[i] || 1;
+      const tt = Math.min(1, Math.max(0, (r.state.s - r.cum[i]) / segLen));
+      r.mesh.position.set(a.x + (b.x - a.x) * tt, 0, a.z + (b.z - a.z) * tt);
+
+      r.heading = easeHeading(
+        r.heading,
+        -Math.atan2(b.z - a.z, b.x - a.x),
+        dt
+      );
+      r.mesh.rotation.y = r.heading;
+
+      const braking = r.state.v < r.cruise * 0.35;
+      for (const bl of r.brakeLights) {
+        (bl.material as THREE.MeshStandardMaterial).emissiveIntensity = braking
+          ? 2.4
+          : 0;
       }
     }
 
@@ -1034,34 +1119,33 @@ export default function MiniCity3D() {
     };
 
     const clock = new THREE.Clock();
+    const PHASE_COLOR: Record<Phase, string> = {
+      green: "#34d399",
+      amber: "#f59e0b",
+      red: "#f87171",
+    };
     let raf = 0;
     const tick = () => {
+      // Capped: coming back to a backgrounded tab hands you one enormous
+      // delta, and the buses would leap across the campus in a single frame.
+      const dt = Math.min(0.05, clock.getDelta());
       const el = clock.getElapsedTime();
-      rigs.forEach((r) => placeBus(r, el));
-      // Traffic-light cycle: green -> amber -> red, with a second countdown
+
+      // Lamps and countdown boards, from the same phaseOf the buses obey.
       signals.forEach((sg) => {
-        const p = (el + sg.offset) % 12;
-        const g = p < 5;
-        const amb = p >= 5 && p < 6.5;
-        const red = p >= 6.5;
-        setLit(sg.green, g);
-        setLit(sg.amber, amb);
-        setLit(sg.red, red);
-        let color = "#34d399";
-        let rem = Math.ceil(5 - p);
-        if (amb) {
-          color = "#f59e0b";
-          rem = Math.ceil(6.5 - p);
-        } else if (red) {
-          color = "#f87171";
-          rem = Math.ceil(12 - p);
-        }
-        const key = color + rem;
+        const { phase, left } = phaseOf(sg.offset, el);
+        setLit(sg.green, phase === "green");
+        setLit(sg.amber, phase === "amber");
+        setLit(sg.red, phase === "red");
+        const rem = Math.ceil(left);
+        const key = phase + rem;
         if (key !== sg.lastKey) {
-          drawCount(sg.ctx, sg.tex, rem, color);
+          drawCount(sg.ctx, sg.tex, rem, PHASE_COLOR[phase]);
           sg.lastKey = key;
         }
       });
+
+      rigs.forEach((r) => driveBus(r, dt, el));
       controls.update();
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
