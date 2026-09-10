@@ -17,7 +17,39 @@ import AIAssistant from "./components/AIAssistant";
 import Toaster from "./components/Toaster";
 
 // The 3D city pulls in three.js, so load it only when its tab is opened.
-const MiniCity3D = lazy(() => import("./components/MiniCity3D"));
+// A dynamic import like this asks the browser for one specific, hashed
+// chunk file (e.g. MiniCity3D-C2Nlq_Uy.js) baked into the bundle that is
+// CURRENTLY RUNNING in the visitor's tab. If a newer version of the site
+// has been deployed since that tab loaded -- or the PWA served an older
+// cached copy of the app shell -- that exact filename may no longer exist
+// on the server, because a new build gives every changed chunk a new
+// hash. I found this live: opening the 3D City tab on the deployed site
+// threw "Failed to fetch dynamically imported module" and took the whole
+// app down to the generic crash screen, even though nothing was wrong
+// with three.js itself -- the running tab just had a stale reference.
+// The fix is to catch exactly that failure and reload the page once. A
+// reload fetches the current index.html and the matching chunk manifest,
+// so the retry lands on a bundle whose filenames actually exist. The
+// sessionStorage guard stops a real, ongoing network outage from
+// reloading forever -- after one attempt this session, a genuine failure
+// is left to surface normally instead of looping.
+type MiniCity3DModule = typeof import("./components/MiniCity3D");
+
+function loadMiniCity3D(): Promise<MiniCity3DModule> {
+  return import("./components/MiniCity3D").catch((err) => {
+    const reloadedKey = "mini-city-3d-reload-attempted";
+    if (!sessionStorage.getItem(reloadedKey)) {
+      sessionStorage.setItem(reloadedKey, "1");
+      window.location.reload();
+      // The page is about to reload; never resolve so React doesn't try
+      // to render with no module.
+      return new Promise<MiniCity3DModule>(() => {});
+    }
+    throw err;
+  });
+}
+
+const MiniCity3D = lazy(loadMiniCity3D);
 import { useLang, type I18nKey } from "./lib/i18n";
 
 type Tab = "dashboard" | "map" | "ai" | "editor";
