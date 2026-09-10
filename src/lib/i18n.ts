@@ -65,6 +65,34 @@ const dict = {
   "live.arriving": { en: "arriving in", zh: "到站还有" },
   "live.now": { en: "arriving now", zh: "即将到站" },
   "live.next": { en: "Next bus", zh: "下一班车" },
+  "tab.home": { en: "Home", zh: "首页" },
+  "home.morning": { en: "Good morning", zh: "早上好" },
+  "home.afternoon": { en: "Good afternoon", zh: "下午好" },
+  "home.evening": { en: "Good evening", zh: "晚上好" },
+  "home.welcome": {
+    en: "Here's your next ride across campus.",
+    zh: "这是你下一班校园班车。",
+  },
+  "home.nextbus": { en: "Next bus", zh: "下一班车" },
+  "home.arriving": { en: "Arriving at", zh: "到达" },
+  "home.track": { en: "Track live bus", zh: "查看实时位置" },
+  "home.nobus": {
+    en: "No bus line serves this stop yet.",
+    zh: "暂无线路经过该站点。",
+  },
+  "home.min": { en: "min", zh: "分钟" },
+  "home.capacity": { en: "Capacity", zh: "载客量" },
+  "home.capacity.low": { en: "Seats free", zh: "座位充足" },
+  "home.capacity.medium": { en: "Filling up", zh: "较为拥挤" },
+  "home.capacity.high": { en: "Nearly full", zh: "接近满载" },
+  "home.favourites": { en: "Your favourite stops", zh: "我的常用站点" },
+  "home.favourites.empty": {
+    en: "Tap the star on any stop in the trip planner to pin it here.",
+    zh: "在路线规划中点击星标，即可固定到这里。",
+  },
+  "home.busiest": { en: "Busiest stops right now", zh: "当前最繁忙站点" },
+  "home.waiting": { en: "waiting", zh: "人候车" },
+  "home.quiet": { en: "All stops are quiet right now.", zh: "当前各站点均不拥挤。" },
 } as const;
 
 export type I18nKey = keyof typeof dict;

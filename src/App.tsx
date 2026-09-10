@@ -14,6 +14,7 @@ import DataTables from "./components/DataTables";
 import ReportSummary from "./components/ReportSummary";
 import LiveEditor from "./components/LiveEditor";
 import AIAssistant from "./components/AIAssistant";
+import StudentHome from "./components/StudentHome";
 import Toaster from "./components/Toaster";
 
 // The 3D city pulls in three.js, so load it only when its tab is opened.
@@ -52,7 +53,7 @@ function loadMiniCity3D(): Promise<MiniCity3DModule> {
 const MiniCity3D = lazy(loadMiniCity3D);
 import { useLang, type I18nKey } from "./lib/i18n";
 
-type Tab = "dashboard" | "map" | "ai" | "editor";
+type Tab = "home" | "dashboard" | "map" | "ai" | "editor";
 type Section = "overview" | "routes" | "capacity" | "data";
 
 const sections: {
@@ -90,11 +91,41 @@ const sections: {
   },
 ];
 
+// The app's top-level tabs, with a small icon each for the mobile bottom bar.
+// `d` is an SVG path drawn on a 24x24 stroke grid.
+const tabs: { id: Tab; labelKey: I18nKey; d: string }[] = [
+  {
+    id: "home",
+    labelKey: "tab.home",
+    d: "M3 10.5 12 3l9 7.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5",
+  },
+  {
+    id: "dashboard",
+    labelKey: "tab.dashboard",
+    d: "M4 13h6V4H4v9zm10 7h6v-9h-6v9zM4 20h6v-4H4v4zm10-11h6V4h-6v5z",
+  },
+  {
+    id: "map",
+    labelKey: "tab.map",
+    d: "M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4zm0 0v13m6-10.5v13",
+  },
+  {
+    id: "ai",
+    labelKey: "tab.ai",
+    d: "M12 3a4 4 0 0 1 4 4v.2A2.8 2.8 0 0 1 18.8 10v5.2A2.8 2.8 0 0 1 16 18H8a2.8 2.8 0 0 1-2.8-2.8V10A2.8 2.8 0 0 1 8 7.2V7a4 4 0 0 1 4-4zM9.5 12h.01m4.99 0h.01",
+  },
+  {
+    id: "editor",
+    labelKey: "tab.editor",
+    d: "M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z",
+  },
+];
+
 // Main layout. A top tab switches between the read-only dashboard and the
 // interactive live editor. Inside the dashboard, a section selector shows one
 // focused view at a time instead of stacking every panel together.
 export default function App() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>("home");
   const [section, setSection] = useState<Section>("overview");
   const { lang, setLang, t } = useLang();
 
@@ -111,7 +142,9 @@ export default function App() {
     }`;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
+    // The extra bottom padding on phones keeps the footer clear of the fixed
+    // bottom nav bar, which otherwise sits on top of it.
+    <div className="mx-auto max-w-6xl px-4 pt-12 pb-28 sm:pb-12 md:px-8">
       <div className="mb-4 flex justify-end">
         <div
           role="group"
@@ -139,39 +172,25 @@ export default function App() {
 
       <Header />
 
-      <nav aria-label="Main sections" className="mb-8 flex flex-wrap justify-center gap-2">
-        <button
-          className={tabClass(tab === "dashboard")}
-          aria-current={tab === "dashboard" ? "page" : undefined}
-          onClick={() => setTab("dashboard")}
-        >
-          {t("tab.dashboard")}
-        </button>
-        <button
-          className={tabClass(tab === "map")}
-          aria-current={tab === "map" ? "page" : undefined}
-          onClick={() => setTab("map")}
-        >
-          {t("tab.map")}
-        </button>
-        <button
-          className={tabClass(tab === "ai")}
-          aria-current={tab === "ai" ? "page" : undefined}
-          onClick={() => setTab("ai")}
-        >
-          {t("tab.ai")}
-        </button>
-        <button
-          className={tabClass(tab === "editor")}
-          aria-current={tab === "editor" ? "page" : undefined}
-          onClick={() => setTab("editor")}
-        >
-          {t("tab.editor")}
-        </button>
+      {/* One tab list drives both the desktop pills and the mobile bottom
+          bar, so the two can never fall out of sync. */}
+      <nav aria-label="Main sections" className="mb-8 hidden flex-wrap justify-center gap-2 sm:flex">
+        {tabs.map((item) => (
+          <button
+            key={item.id}
+            className={tabClass(tab === item.id)}
+            aria-current={tab === item.id ? "page" : undefined}
+            onClick={() => setTab(item.id)}
+          >
+            {t(item.labelKey)}
+          </button>
+        ))}
       </nav>
 
       <main id="main">
       <OfflineBanner />
+      {tab === "home" && <StudentHome onTrackLive={() => setTab("map")} />}
+
       {tab === "map" && (
         <Suspense
           fallback={
@@ -252,6 +271,46 @@ export default function App() {
       <footer className="mt-14 border-t border-slate-800/70 pt-6 text-center text-xs text-slate-500">
         {t("footer.built")}
       </footer>
+
+      {/* Mobile bottom navigation. Phones get a thumb-reachable bar in place
+          of the wrapping pill row, which on a narrow screen pushed the actual
+          content most of a scroll below the fold. Hidden from screen readers
+          because it duplicates the nav above rather than adding anything. */}
+      <nav
+        aria-hidden="true"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800/80 bg-ink-950/90 backdrop-blur-lg sm:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="flex items-stretch justify-around">
+          {tabs.map((item) => {
+            const active = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setTab(item.id)}
+                tabIndex={-1}
+                className={`flex flex-1 flex-col items-center gap-1 px-1 py-2.5 text-[10px] font-semibold transition ${
+                  active ? "text-brand-400" : "text-slate-500"
+                }`}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d={item.d} />
+                </svg>
+                {t(item.labelKey)}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       <Toaster />
     </div>
