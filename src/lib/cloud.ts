@@ -23,6 +23,8 @@ interface StopRow {
   x: number;
   y: number;
   passenger_count: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 interface RouteRow {
   id: number;
@@ -50,6 +52,8 @@ function rowToStop(r: StopRow): Stop {
     x: r.x,
     y: r.y,
     passengerCount: r.passenger_count ?? 0,
+    latitude: r.latitude ?? null,
+    longitude: r.longitude ?? null,
   };
 }
 function stopToRow(s: Stop): StopRow {
@@ -60,6 +64,8 @@ function stopToRow(s: Stop): StopRow {
     x: s.x,
     y: s.y,
     passenger_count: s.passengerCount,
+    latitude: s.latitude ?? null,
+    longitude: s.longitude ?? null,
   };
 }
 function rowToRoute(r: RouteRow): Route {
@@ -220,6 +226,98 @@ export async function cloudFetchAlerts(): Promise<DriverAlert[]> {
 export async function cloudClearAlert(id: number): Promise<string | null> {
   const { error } = await db().from("driver_alerts").delete().eq("id", id);
   return error ? error.message : null;
+}
+
+// ---- Live GPS positions (the `bus_locations` table) ----
+//
+// Security lives in the database, not here: everyone may read, but the RLS
+// policy only lets a signed-in driver write the row for the bus they are
+// actually assigned to in the `drivers` table. A stranger cannot place a bus
+// on the map, and one driver cannot move another driver's bus.
+export interface BusLocation {
+  busId: number;
+  latitude: number;
+  longitude: number;
+  speedKmh: number | null;
+  heading: number | null;
+  accuracyM: number | null;
+  status: string;
+  updatedAt: string;
+}
+
+function rowToLocation(r: Record<string, unknown>): BusLocation {
+  return {
+    busId: r.bus_id as number,
+    latitude: r.latitude as number,
+    longitude: r.longitude as number,
+    speedKmh: (r.speed_kmh as number) ?? null,
+    heading: (r.heading as number) ?? null,
+    accuracyM: (r.accuracy_m as number) ?? null,
+    status: (r.status as string) ?? "active",
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export async function cloudFetchBusLocations(): Promise<BusLocation[]> {
+  const { data, error } = await db().from("bus_locations").select("*");
+  if (error) throw new Error(`Reading bus locations failed: ${error.message}`);
+  return (data as Record<string, unknown>[]).map(rowToLocation);
+}
+
+/** Which bus this signed-in account is allowed to drive, if any. */
+export async function cloudMyDriverBus(): Promise<number | null> {
+  const { data, error } = await db()
+    .from("drivers")
+    .select("bus_id")
+    .maybeSingle();
+  if (error) return null;
+  return (data?.bus_id as number) ?? null;
+}
+
+/** Publish one GPS fix. Rejected by the database unless it is your own bus. */
+export async function cloudPublishLocation(
+  loc: Omit<BusLocation, "updatedAt" | "status"> & { status?: string }
+): Promise<string | null> {
+  const { error } = await db().from("bus_locations").upsert(
+    {
+      bus_id: loc.busId,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      speed_kmh: loc.speedKmh,
+      heading: loc.heading,
+      accuracy_m: loc.accuracyM,
+      status: loc.status ?? "active",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "bus_id" }
+  );
+  return error ? error.message : null;
+}
+
+/**
+ * Live position updates. Falls back to polling in the caller if the socket
+ * never connects - the same three-layer approach the rest of the app uses,
+ * because a WebSocket to a service hosted abroad is exactly what an unreliable
+ * campus network drops first.
+ */
+export function subscribeToBusLocations(
+  onChange: (loc: BusLocation) => void,
+  onStatus?: (status: RealtimeStatus) => void
+): () => void {
+  const channel = db()
+    .channel("bus-locations-live")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "bus_locations" },
+      (payload) => {
+        const row = (payload.new ?? payload.old) as Record<string, unknown> | null;
+        if (row && row.bus_id !== undefined) onChange(rowToLocation(row));
+      }
+    )
+    .subscribe((status) => onStatus?.(status as RealtimeStatus));
+  return () => {
+    db().removeChannel(channel);
+  };
 }
 
 export async function cloudSeed(

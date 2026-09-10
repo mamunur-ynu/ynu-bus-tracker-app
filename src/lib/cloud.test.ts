@@ -58,8 +58,44 @@ describe("cloudFetch", () => {
 
     const result = await cloudFetch();
     expect(result.stops).toEqual([
-      { id: 1, englishName: "YNU East Gate", chineseName: "云南大学东门", x: 93, y: 52, passengerCount: 0 },
+      {
+        id: 1,
+        englishName: "YNU East Gate",
+        chineseName: "云南大学东门",
+        x: 93,
+        y: 52,
+        passengerCount: 0,
+        // A stop whose real position has not been captured yet reports null
+        // rather than a default coordinate - "we don't know" has to stay
+        // distinguishable from "it's at 0, 0 off the coast of Africa".
+        latitude: null,
+        longitude: null,
+      },
     ]);
     expect(result.routes).toEqual([]);
+  });
+
+  it("carries real GPS coordinates through once a stop has been captured", async () => {
+    mockOrder
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 6,
+            english_name: "YNU Library",
+            chinese_name: "图书馆",
+            x: 33,
+            y: 56,
+            passenger_count: 6,
+            latitude: 24.8237,
+            longitude: 102.8523,
+          },
+        ],
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: [], error: null });
+
+    const result = await cloudFetch();
+    expect(result.stops[0].latitude).toBeCloseTo(24.8237, 6);
+    expect(result.stops[0].longitude).toBeCloseTo(102.8523, 6);
   });
 });

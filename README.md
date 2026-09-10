@@ -39,7 +39,7 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | Initial JS payload | **~132 KB gzipped**, split into app / React / Supabase vendor chunks so a code change doesn't invalidate the whole cache — the 3D scene is a separate lazy chunk (135 KB gzipped, loaded only when that tab opens) |
 | Imagery | route board optimised **4.7 MB → 282 KB** (−94%) |
 | Offline | full app shell + campus imagery precached (PWA, 15 entries) |
-| Tests | 79 unit tests, run on every push by GitHub Actions |
+| Tests | 124 unit tests, run on every push by GitHub Actions |
 | Accessibility | skip link, landmarks, `aria-pressed`/`aria-current`, live regions, reduced-motion, `<html lang>` follows the toggle |
 | Languages | English + 中文, full UI toggle |
 | Data safety | admin can export/import a full JSON backup — works with zero network |

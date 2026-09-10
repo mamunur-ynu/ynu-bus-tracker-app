@@ -7,6 +7,7 @@ import { cloudRaiseAlert, cloudUpsertBus, isCloudConfigured } from "../lib/cloud
 import { useFleet } from "../lib/fleet";
 import { tripDuration, tripProgress } from "../lib/trip";
 import { SIM_MIN_PER_SEC } from "../lib/arrivals";
+import DriverGpsPanel from "./DriverGpsPanel";
 
 const input =
   "w-full rounded-lg border border-slate-700 bg-ink-950/60 px-3 py-2 text-sm text-white";
@@ -188,6 +189,9 @@ export default function DriverConsole() {
               </span>
             )}
           </div>
+
+          {/* Real GPS broadcast - the part that puts this bus on the live map */}
+          <DriverGpsPanel onTrip={startedAt !== null && !progress.finished} />
 
           {/* Trip progress */}
           {bus && stopIds.length > 0 && (

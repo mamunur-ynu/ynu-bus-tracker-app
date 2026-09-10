@@ -16,6 +16,7 @@ import LiveEditor from "./components/LiveEditor";
 import AIAssistant from "./components/AIAssistant";
 import StudentHome from "./components/StudentHome";
 import FleetPanel from "./components/FleetPanel";
+import StopGpsCapture from "./components/StopGpsCapture";
 import DriverConsole from "./components/DriverConsole";
 import Toaster from "./components/Toaster";
 
@@ -53,9 +54,27 @@ function loadMiniCity3D(): Promise<MiniCity3DModule> {
 }
 
 const MiniCity3D = lazy(loadMiniCity3D);
+
+// Leaflet is another heavy dependency only one tab needs, so it gets the same
+// lazy-load plus stale-chunk reload guard as the 3D city above.
+type LiveBusMapModule = typeof import("./components/LiveBusMap");
+
+function loadLiveBusMap(): Promise<LiveBusMapModule> {
+  return import("./components/LiveBusMap").catch((err) => {
+    const key = "live-map-reload-attempted";
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, "1");
+      window.location.reload();
+      return new Promise<LiveBusMapModule>(() => {});
+    }
+    throw err;
+  });
+}
+
+const LiveBusMap = lazy(loadLiveBusMap);
 import { useLang, type I18nKey } from "./lib/i18n";
 
-type Tab = "home" | "dashboard" | "map" | "ai" | "driver" | "editor";
+type Tab = "home" | "dashboard" | "live" | "map" | "ai" | "driver" | "editor";
 type Section = "overview" | "routes" | "capacity" | "data";
 
 const sections: {
@@ -100,6 +119,11 @@ const tabs: { id: Tab; labelKey: I18nKey; d: string }[] = [
     id: "home",
     labelKey: "tab.home",
     d: "M3 10.5 12 3l9 7.5M5.5 9.5V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.5",
+  },
+  {
+    id: "live",
+    labelKey: "tab.live",
+    d: "M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
   },
   {
     id: "dashboard",
@@ -196,7 +220,15 @@ export default function App() {
 
       <main id="main">
       <OfflineBanner />
-      {tab === "home" && <StudentHome onTrackLive={() => setTab("map")} />}
+      {tab === "home" && <StudentHome onTrackLive={() => setTab("live")} />}
+
+      {tab === "live" && (
+        <Suspense
+          fallback={<div className="skeleton h-[420px] w-full rounded-2xl md:h-[520px]" />}
+        >
+          <LiveBusMap />
+        </Suspense>
+      )}
 
       {tab === "map" && (
         <Suspense
@@ -216,6 +248,7 @@ export default function App() {
         <div className="space-y-8">
           <LiveEditor />
           <FleetPanel />
+          <StopGpsCapture />
         </div>
       )}
 

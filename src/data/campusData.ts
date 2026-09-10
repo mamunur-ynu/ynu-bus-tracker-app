@@ -11,6 +11,16 @@ export interface Stop {
   x: number; // percent from left
   y: number; // percent from top
   passengerCount: number;
+  /**
+   * Real-world coordinates, captured on site with a phone's GPS.
+   *
+   * Null until someone actually stands at the stop and records it. These are
+   * deliberately NOT derived from x/y above: those are positions on a picture
+   * of the campus, and converting them to latitude/longitude would mean
+   * inventing where the stop is.
+   */
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface Route {
