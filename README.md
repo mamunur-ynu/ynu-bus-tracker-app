@@ -1,10 +1,10 @@
 <div align="center">
 
-# 🚌 Smart Campus Bus Tracker
+# 🚌 YNU Smart Mobility
 
-### Real-time, cloud-based campus shuttle tracker & route optimizer
+### Your Campus. Your Route. Your Journey.
 
-A full-stack web app with a live **3D city view**, Dijkstra route optimization, cloud database, real-time sync, admin auth, and continuous deployment — the web companion to a C++ course project at Yunnan University.
+A full-stack web app with a live **3D city view**, Dijkstra route optimization, cloud database, real-time sync, admin auth, and continuous deployment — the web companion to a C++ course project at Yunnan University. (Formerly "Smart Campus Bus Tracker" — same project, rebranded.)
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen)](#)
 [![lighthouse-performance](https://img.shields.io/badge/lighthouse_performance-94-brightgreen)](#)

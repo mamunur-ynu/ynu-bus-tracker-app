@@ -11,12 +11,12 @@ const dict = {
     zh: "云南大学 · 软件与人工智能学院",
   },
   "header.title": {
-    en: "Smart Campus Bus Tracker",
-    zh: "智慧校园公交追踪系统",
+    en: "YNU Smart Mobility",
+    zh: "云南大学智慧出行",
   },
   "header.subtitle": {
-    en: "A live, cloud-based route optimizer for the campus shuttle network.",
-    zh: "面向校园班车网络的实时云端路径优化系统。",
+    en: "Your Campus. Your Route. Your Journey.",
+    zh: "你的校园，你的路线，你的旅程。",
   },
   "tab.dashboard": { en: "Dashboard", zh: "仪表盘" },
   "tab.editor": { en: "Live Editor", zh: "实时编辑器" },

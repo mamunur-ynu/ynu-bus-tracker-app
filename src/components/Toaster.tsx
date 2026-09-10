@@ -4,7 +4,7 @@ import { subscribeToasts, type ToastItem } from "../lib/toast";
 const styles: Record<ToastItem["kind"], string> = {
   success: "border-emerald-500/40 bg-emerald-500/15 text-emerald-200",
   error: "border-rose-500/40 bg-rose-500/15 text-rose-200",
-  info: "border-sky-500/40 bg-sky-500/15 text-sky-200",
+  info: "border-brand-500/40 bg-brand-500/15 text-blue-200",
 };
 
 const icons: Record<ToastItem["kind"], string> = {

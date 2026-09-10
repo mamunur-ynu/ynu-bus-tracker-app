@@ -63,13 +63,13 @@ export default function ServiceAlerts() {
           className={`flex items-start gap-2.5 rounded-2xl border px-4 py-2.5 text-sm ${
             a.level === "warning"
               ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-              : "border-sky-500/25 bg-sky-500/10 text-sky-200"
+              : "border-brand-500/25 bg-brand-500/10 text-blue-200"
           }`}
         >
           <span
             aria-hidden="true"
             className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-              a.level === "warning" ? "bg-amber-400" : "bg-sky-400"
+              a.level === "warning" ? "bg-amber-400" : "bg-brand-400"
             }`}
           />
           <span>{lang === "zh" ? a.zh : a.en}</span>

@@ -64,8 +64,8 @@ const sections: {
   {
     id: "overview",
     labelKey: "section.overview",
-    active: "bg-sky-500/15 text-sky-300 shadow-[0_0_18px_rgba(56,189,248,0.25)]",
-    dot: "bg-sky-400",
+    active: "bg-brand-500/15 text-brand-400 shadow-[0_0_18px_rgba(37,99,235,0.25)]",
+    dot: "bg-brand-500",
   },
   {
     id: "routes",
@@ -101,7 +101,7 @@ export default function App() {
   const tabClass = (active: boolean) =>
     `rounded-full px-6 py-2 text-sm font-semibold transition ${
       active
-        ? "border border-brand-500/50 bg-brand-500/15 text-brand-400 shadow-[0_0_20px_rgba(56,189,248,0.15)]"
+        ? "border border-brand-500/50 bg-brand-500/15 text-brand-400 shadow-[0_0_20px_rgba(37,99,235,0.15)]"
         : "border border-slate-700/70 bg-white/[0.03] text-slate-400 hover:text-slate-200"
     }`;
 

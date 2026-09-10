@@ -68,7 +68,7 @@ export default function RouteMap({
             let stroke = "#e2e8f0";
             if (delayed) stroke = "#f87171";
             else if (simulation) stroke = active ? "#c4b5fd" : "#a78bfa";
-            else if (active) stroke = "#38bdf8";
+            else if (active) stroke = "#2563eb";
 
             const width = active || delayed ? 1.1 : 0.5;
             let dash: string | undefined;

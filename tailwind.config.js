@@ -10,18 +10,29 @@ export default {
           800: "#1e293b",
           700: "#334155",
         },
+        // Royal Blue: the YNU Smart Mobility brand color (was a lighter sky
+        // blue). Every `brand-400/500/600` utility across the app picks this
+        // up automatically -- no per-component edits needed.
         brand: {
-          400: "#38bdf8",
-          500: "#0ea5e9",
-          600: "#0284c7",
+          400: "#60a5fa",
+          500: "#2563eb",
+          600: "#1d4ed8",
+        },
+        // Electric Green: the secondary accent, used alongside brand blue
+        // for the two-tone premium identity (gradients, the Z53 route, the
+        // "connected/active" state).
+        accent: {
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
         },
       },
       fontFamily: {
         sans: ["Inter", "Segoe UI", "system-ui", "sans-serif"],
-        display: ["Sora", "Inter", "sans-serif"],
+        display: ["Poppins", "Inter", "sans-serif"],
       },
       boxShadow: {
-        glow: "0 0 24px rgba(56,189,248,0.25)",
+        glow: "0 0 24px rgba(37,99,235,0.25)",
       },
       keyframes: {
         fadeIn: {

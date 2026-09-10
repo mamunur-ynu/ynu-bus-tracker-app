@@ -9,8 +9,8 @@ export default function Header() {
         {t("header.kicker")}
       </p>
       <h1
-        className="mt-4 bg-gradient-to-r from-white via-sky-100 to-violet-200 bg-clip-text text-4xl font-extrabold leading-[1.05] tracking-tight text-transparent md:text-6xl"
-        style={{ fontFamily: "Sora, Inter, sans-serif" }}
+        className="mt-4 bg-gradient-to-r from-white via-blue-100 to-green-200 bg-clip-text text-4xl font-extrabold leading-[1.05] tracking-tight text-transparent md:text-6xl"
+        style={{ fontFamily: "Poppins, Inter, sans-serif" }}
       >
         {t("header.title")}
       </h1>

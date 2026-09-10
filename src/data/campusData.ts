@@ -102,14 +102,17 @@ export const busLines: BusLine[] = [
     code: "Z52",
     displayName: "YNU Engineering Express",
     label: "YNU Engineering Express (East Gate - Engineering College)",
-    color: "#38bdf8",
+    // Royal Blue: the primary YNU Smart Mobility brand color.
+    color: "#2563eb",
     stopIds: [1, 8, 7, 12, 6, 11, 5, 2, 9],
   },
   {
     code: "Z53",
     displayName: "YNU Campus Connector",
     label: "YNU Campus Connector (East Gate - West Gate)",
-    color: "#a78bfa",
+    // Electric Green: the secondary brand accent, so the app's two real
+    // bus lines now map directly onto the two-tone brand identity.
+    color: "#22c55e",
     stopIds: [1, 8, 7, 12, 6, 11, 5, 2, 4],
   },
 ];

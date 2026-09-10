@@ -40,6 +40,8 @@ A full-stack web application that:
 
 **Shipping responsibly.** Only the Supabase *publishable* key lives in the client; the secret key never touches the frontend. The heavy Three.js bundle is code-split and lazy-loaded so it only downloads when the 3D tab is opened, keeping the initial load light.
 
+**A brand, not just a repaint.** After the app was working end to end, I gave it an actual product identity instead of leaving it as an unnamed student demo: "YNU Smart Mobility," with the tagline "Your Campus. Your Route. Your Journey." I picked a real two-color system (Royal Blue `#2563EB` and Electric Green `#22C55E` over a Deep Navy base) and, rather than only changing a title bar, ran it all the way through the product: the primary bus line (Z52) now *is* the brand blue, the second line (Z53) *is* the brand green, the card-title gradient and every active/focus state pick up the same two colors, and the display font moved from Sora to Poppins for a more distinct product feel next to Inter's body text. A design system means one color decision propagates everywhere it appears instead of being redone by hand in twenty places — which is also why the color tokens live in one spot (`tailwind.config.js`) rather than being copy-pasted as hex codes through every component.
+
 ## What I learned
 
 - How to take an academic algorithm and wrap it in a real, deployable product.

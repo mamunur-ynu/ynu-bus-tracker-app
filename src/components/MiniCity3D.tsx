@@ -146,8 +146,8 @@ export default function MiniCity3D() {
       emissiveIntensity: 0.5,
     });
     const ledMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      emissive: 0x38bdf8,
+      color: 0x2563eb,
+      emissive: 0x2563eb,
       emissiveIntensity: 1.2,
     });
     const roadW = 7;

@@ -72,7 +72,7 @@ export default function AIAssistant() {
             <div
               className={`max-w-[85%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-sm ${
                 m.role === "user"
-                  ? "bg-brand-500/20 text-sky-100"
+                  ? "bg-brand-500/20 text-blue-100"
                   : "border border-slate-700/50 bg-ink-950/50 text-slate-200"
               }`}
             >

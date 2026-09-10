@@ -17,11 +17,14 @@ body {
   color: #e6edf7;
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* YNU Smart Mobility ambient background: Royal Blue + Electric Green
+     glows over a Deep Navy / Dark Mode base, replacing the old sky/violet
+     mix so the whole page reads in the new two-tone brand palette. */
   background:
-    radial-gradient(900px 520px at 12% -8%, rgba(56, 189, 248, 0.16), transparent 60%),
-    radial-gradient(820px 520px at 100% 0%, rgba(139, 92, 246, 0.14), transparent 55%),
-    radial-gradient(1000px 720px at 50% 120%, rgba(14, 165, 233, 0.10), transparent 60%),
-    linear-gradient(180deg, #0a1020 0%, #070b16 100%);
+    radial-gradient(900px 520px at 12% -8%, rgba(37, 99, 235, 0.18), transparent 60%),
+    radial-gradient(820px 520px at 100% 0%, rgba(34, 197, 94, 0.13), transparent 55%),
+    radial-gradient(1000px 720px at 50% 120%, rgba(37, 99, 235, 0.10), transparent 60%),
+    linear-gradient(180deg, #111827 0%, #0b1120 100%);
   background-attachment: fixed;
 }
 
@@ -39,18 +42,23 @@ body {
 }
 
 .card:hover {
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.55), 0 0 0 1px rgba(56, 189, 248, 0.12),
+  border-color: rgba(37, 99, 235, 0.35);
+  /* Subtle premium lift on hover, on top of the existing glow -- makes
+     every card in the app feel like a floating, tactile surface. */
+  transform: translateY(-2px);
+  box-shadow: 0 22px 54px rgba(2, 6, 23, 0.55), 0 0 0 1px rgba(37, 99, 235, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .card-title {
-  font-family: Sora, Inter, sans-serif;
+  font-family: Poppins, Inter, sans-serif;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  background: linear-gradient(90deg, #7dd3fc, #a78bfa);
+  /* Royal Blue -> Electric Green: the signature YNU Smart Mobility
+     gradient, used on every card heading in the app. */
+  background: linear-gradient(90deg, #60a5fa, #22c55e);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -134,8 +142,8 @@ input {
 select:focus,
 input:focus {
   outline: none;
-  border-color: rgba(56, 189, 248, 0.6) !important;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+  border-color: rgba(37, 99, 235, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 button {
   transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease,

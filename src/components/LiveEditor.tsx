@@ -476,7 +476,7 @@ export default function LiveEditor() {
                       y1={a.y}
                       x2={b.x}
                       y2={b.y}
-                      stroke={active ? "#38bdf8" : "#e2e8f0"}
+                      stroke={active ? "#60a5fa" : "#e2e8f0"}
                       strokeWidth={active ? 1.1 : 0.5}
                       opacity={active ? 1 : 0.55}
                     />

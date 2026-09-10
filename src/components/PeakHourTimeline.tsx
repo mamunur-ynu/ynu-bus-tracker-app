@@ -68,7 +68,7 @@ export default function PeakHourTimeline() {
           const peak = isPeakHour(s.departure);
           return (
             <g key={s.id}>
-              <circle cx={x} cy={60} r={7} fill={peak ? "#f59e0b" : "#38bdf8"} />
+              <circle cx={x} cy={60} r={7} fill={peak ? "#f59e0b" : "#60a5fa"} />
               <text x={x} y={34} textAnchor="middle" fontSize="11" fill="#e2e8f0">
                 {formatTime(s.departure)}
               </text>

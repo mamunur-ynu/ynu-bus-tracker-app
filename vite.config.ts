@@ -38,12 +38,12 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
       manifest: {
-        name: "YNU Smart Campus Bus Tracker",
-        short_name: "YNU Bus",
+        name: "YNU Smart Mobility",
+        short_name: "YNU Mobility",
         description:
-          "Yunnan University Smart Campus Bus Tracker and Route Optimizer",
-        theme_color: "#0ea5e9",
-        background_color: "#0b1120",
+          "YNU Smart Mobility — Your Campus. Your Route. Your Journey. Live campus shuttle tracking and route optimization for Yunnan University.",
+        theme_color: "#2563eb",
+        background_color: "#111827",
         display: "standalone",
         start_url: "/",
         icons: [
