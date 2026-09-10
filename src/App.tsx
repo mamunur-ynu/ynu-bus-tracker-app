@@ -15,6 +15,7 @@ import ReportSummary from "./components/ReportSummary";
 import LiveEditor from "./components/LiveEditor";
 import AIAssistant from "./components/AIAssistant";
 import StudentHome from "./components/StudentHome";
+import FleetPanel from "./components/FleetPanel";
 import Toaster from "./components/Toaster";
 
 // The 3D city pulls in three.js, so load it only when its tab is opened.
@@ -203,7 +204,12 @@ export default function App() {
 
       {tab === "ai" && <AIAssistant />}
 
-      {tab === "editor" && <LiveEditor />}
+      {tab === "editor" && (
+        <div className="space-y-8">
+          <LiveEditor />
+          <FleetPanel />
+        </div>
+      )}
 
       {tab === "dashboard" && (
         <>

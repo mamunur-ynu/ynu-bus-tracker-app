@@ -93,6 +93,27 @@ const dict = {
   "home.busiest": { en: "Busiest stops right now", zh: "当前最繁忙站点" },
   "home.waiting": { en: "waiting", zh: "人候车" },
   "home.quiet": { en: "All stops are quiet right now.", zh: "当前各站点均不拥挤。" },
+  "fleet.title": { en: "Fleet management", zh: "车队管理" },
+  "fleet.subtitle": { en: "Buses in service", zh: "在运车辆" },
+  "fleet.total": { en: "Total buses", zh: "车辆总数" },
+  "fleet.active": { en: "In service", zh: "运营中" },
+  "fleet.offroad": { en: "Off road", zh: "停运" },
+  "fleet.occupancy": { en: "Occupancy", zh: "满载率" },
+  "fleet.readonly": {
+    en: "Sign in as admin in the panel above to add or edit buses.",
+    zh: "请在上方面板以管理员身份登录后添加或编辑车辆。",
+  },
+  "fleet.plate": { en: "Plate number", zh: "车牌号" },
+  "fleet.driver": { en: "Driver", zh: "司机" },
+  "fleet.line": { en: "Line", zh: "线路" },
+  "fleet.capacity": { en: "Seats", zh: "座位数" },
+  "fleet.onboard": { en: "On board", zh: "在车人数" },
+  "fleet.add": { en: "Add bus", zh: "添加车辆" },
+  "fleet.remove": { en: "Remove", zh: "移除" },
+  "fleet.instatus": { en: "In service", zh: "运营中" },
+  "fleet.outstatus": { en: "Off road", zh: "停运" },
+  "fleet.empty": { en: "No buses in the fleet yet.", zh: "车队暂无车辆。" },
+  "fleet.nodriver": { en: "No driver assigned", zh: "未分配司机" },
 } as const;
 
 export type I18nKey = keyof typeof dict;

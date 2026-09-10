@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { buses, getStop, stops } from "../data/campusData";
+import { getStop, stops } from "../data/campusData";
 import { useLang } from "../lib/i18n";
 import { useFavorites } from "../lib/favorites";
+import { lineLoad, useFleet } from "../lib/fleet";
 import {
   buildLineModels,
   minutesLeft,
@@ -15,17 +16,6 @@ interface StudentHomeProps {
   onTrackLive: () => void;
 }
 
-// How full a line's buses are, from the real onboard/capacity figures in
-// campusData rather than an invented number.
-function lineLoad(line: string): { pct: number; level: "low" | "medium" | "high" } {
-  const fleet = buses.filter((b) => b.line === line);
-  if (fleet.length === 0) return { pct: 0, level: "low" };
-  const onboard = fleet.reduce((sum, b) => sum + b.onboardCount, 0);
-  const capacity = fleet.reduce((sum, b) => sum + b.capacity, 0);
-  const pct = capacity === 0 ? 0 : Math.round((onboard / capacity) * 100);
-  return { pct, level: pct >= 75 ? "high" : pct >= 45 ? "medium" : "low" };
-}
-
 const loadStyles = {
   low: { dot: "#22c55e", text: "text-accent-400", key: "home.capacity.low" },
   medium: { dot: "#f59e0b", text: "text-amber-300", key: "home.capacity.medium" },
@@ -37,6 +27,8 @@ const loadStyles = {
 export default function StudentHome({ onTrackLive }: StudentHomeProps) {
   const { t, lang } = useLang();
   const { favorites, toggleFavorite } = useFavorites();
+  // Same fleet the admin panel edits, so a capacity change shows up here too.
+  const { fleet } = useFleet();
   const startRef = useRef<number>(Date.now());
   const [, force] = useState(0);
 
@@ -168,7 +160,7 @@ export default function StudentHome({ onTrackLive }: StudentHomeProps) {
 
               {/* Capacity, from the real fleet figures for this line */}
               {(() => {
-                const load = lineLoad(next.line.code);
+                const load = lineLoad(fleet, next.line.code);
                 const style = loadStyles[load.level];
                 return (
                   <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-800/70 pt-4">

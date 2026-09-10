@@ -3,7 +3,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseConfig";
-import type { Stop, Route } from "../data/campusData";
+import type { Stop, Route, Bus } from "../data/campusData";
 
 export function isCloudConfigured(): boolean {
   return SUPABASE_URL.startsWith("http") && SUPABASE_ANON_KEY.length > 20;
@@ -31,6 +31,15 @@ interface RouteRow {
   destination_stop_id: number;
   travel_time_minutes: number;
   delay_minutes: number | null;
+}
+interface BusRow {
+  id: number;
+  plate_number: string;
+  line: string;
+  capacity: number;
+  onboard_count: number;
+  driver_name: string | null;
+  active: boolean;
 }
 
 function rowToStop(r: StopRow): Stop {
@@ -74,6 +83,29 @@ function routeToRow(r: Route): RouteRow {
   };
 }
 
+function rowToBus(r: BusRow): Bus {
+  return {
+    id: r.id,
+    plateNumber: r.plate_number,
+    line: r.line,
+    capacity: r.capacity,
+    onboardCount: r.onboard_count,
+    driverName: r.driver_name ?? undefined,
+    active: r.active,
+  };
+}
+function busToRow(b: Bus): BusRow {
+  return {
+    id: b.id,
+    plate_number: b.plateNumber,
+    line: b.line,
+    capacity: b.capacity,
+    onboard_count: b.onboardCount,
+    driver_name: b.driverName ?? null,
+    active: b.active,
+  };
+}
+
 export async function cloudFetch(): Promise<{ stops: Stop[]; routes: Route[] }> {
   const s = await db().from("stops").select("*").order("id");
   const r = await db().from("routes").select("*").order("id");
@@ -107,6 +139,24 @@ export async function cloudDeleteStop(id: number): Promise<string | null> {
 }
 export async function cloudDeleteRoute(id: number): Promise<string | null> {
   const { error } = await db().from("routes").delete().eq("id", id);
+  return error ? error.message : null;
+}
+
+// ---- Fleet (the `buses` table) ----
+// Same contract as the stop/route helpers above: a failed read throws rather
+// than quietly returning [], and a failed write returns the message so the
+// admin sees why it did not save.
+export async function cloudFetchBuses(): Promise<Bus[]> {
+  const { data, error } = await db().from("buses").select("*").order("id");
+  if (error) throw new Error(`Reading buses failed: ${error.message}`);
+  return (data as BusRow[]).map(rowToBus);
+}
+export async function cloudUpsertBus(b: Bus): Promise<string | null> {
+  const { error } = await db().from("buses").upsert(busToRow(b));
+  return error ? error.message : null;
+}
+export async function cloudDeleteBus(id: number): Promise<string | null> {
+  const { error } = await db().from("buses").delete().eq("id", id);
   return error ? error.message : null;
 }
 

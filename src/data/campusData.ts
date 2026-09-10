@@ -31,6 +31,10 @@ export interface Bus {
   capacity: number;
   onboardCount: number;
   line: string;
+  /** Who is driving it today. Optional: the fleet may not have it filled in. */
+  driverName?: string;
+  /** False for a bus that is off the road (maintenance, not in service). */
+  active: boolean;
 }
 
 export interface TimeSlot {
@@ -122,10 +126,14 @@ export function lineDisplayName(code: string): string {
   return busLines.find((l) => l.code === code)?.displayName ?? code;
 }
 
+// The offline fallback fleet. The live fleet lives in the `buses` table in
+// Supabase and is what the app shows when it can reach the cloud; this seed
+// keeps the app working with no network at all, exactly like the stop and
+// route fallbacks above.
 export const buses: Bus[] = [
-  { id: 1, plateNumber: "BUS-Z52A", capacity: 40, onboardCount: 22, line: "Z52" },
-  { id: 2, plateNumber: "BUS-Z53A", capacity: 35, onboardCount: 30, line: "Z53" },
-  { id: 3, plateNumber: "BUS-Z52B", capacity: 45, onboardCount: 10, line: "Z52" },
+  { id: 1, plateNumber: "BUS-Z52A", capacity: 40, onboardCount: 22, line: "Z52", driverName: "Mr. Zhang", active: true },
+  { id: 2, plateNumber: "BUS-Z53A", capacity: 35, onboardCount: 30, line: "Z53", driverName: "Ms. Li", active: true },
+  { id: 3, plateNumber: "BUS-Z52B", capacity: 45, onboardCount: 10, line: "Z52", driverName: "Mr. Wang", active: true },
 ];
 
 export const schedules: Schedule[] = [

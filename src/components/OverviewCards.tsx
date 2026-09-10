@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import {
   stops,
   routes,
-  buses,
   schedules,
   stopQueues,
   isPeakHour,
 } from "../data/campusData";
 import { useLang, type I18nKey } from "../lib/i18n";
+import { useFleet } from "../lib/fleet";
 
 interface Stat {
   labelKey: I18nKey;
@@ -15,17 +15,26 @@ interface Stat {
   value: number;
 }
 
-// Counts up from 0 to `target` once, respecting reduced-motion.
+// Counts up to `target`, respecting reduced-motion.
+//
+// This used to run once and then refuse to run again (a `started` ref guard),
+// which was fine while every figure was a hardcoded constant. Now that the
+// fleet is loaded from the cloud, the target genuinely changes after mount -
+// the seed value renders first, then the real one arrives - and the old guard
+// would have left the card showing the stale number forever. So it now
+// animates from whatever is on screen to the new target whenever that target
+// changes, which also makes an admin adding a bus visibly tick the card up.
 function useCountUp(target: number, durationMs = 900) {
   const [value, setValue] = useState(0);
-  const started = useRef(false);
+  const fromRef = useRef(0);
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    const from = fromRef.current;
+    if (from === target) return;
     const reduce = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)"
     ).matches;
     if (reduce) {
+      fromRef.current = target;
       setValue(target);
       return;
     }
@@ -34,8 +43,13 @@ function useCountUp(target: number, durationMs = 900) {
     const tick = (now: number) => {
       const p = Math.min(1, (now - start) / durationMs);
       const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
-      setValue(Math.round(eased * target));
-      if (p < 1) raf = requestAnimationFrame(tick);
+      const next = Math.round(from + (target - from) * eased);
+      setValue(next);
+      if (p < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        fromRef.current = target;
+      }
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
@@ -64,6 +78,9 @@ function StatCard({ stat, index }: { stat: Stat; index: number }) {
 
 // Small metric cards that summarize the whole system.
 export default function OverviewCards() {
+  // The fleet is live data now, not a constant, so the bus count reflects
+  // whatever the admin has actually put on the road.
+  const { fleet } = useFleet();
   const peakCount = schedules.filter((s) => isPeakHour(s.departure)).length;
   const waiting = Object.values(stopQueues).reduce(
     (sum, list) => sum + list.length,
@@ -73,7 +90,7 @@ export default function OverviewCards() {
   const stats: Stat[] = [
     { labelKey: "stat.stops", hintKey: "stat.stops.hint", value: stops.length },
     { labelKey: "stat.routes", hintKey: "stat.routes.hint", value: routes.length },
-    { labelKey: "stat.buses", hintKey: "stat.buses.hint", value: buses.length },
+    { labelKey: "stat.buses", hintKey: "stat.buses.hint", value: fleet.filter((b) => b.active).length },
     { labelKey: "stat.schedules", hintKey: "stat.schedules.hint", value: schedules.length },
     { labelKey: "stat.peak", hintKey: "stat.peak.hint", value: peakCount },
     { labelKey: "stat.waiting", hintKey: "stat.waiting.hint", value: waiting },
