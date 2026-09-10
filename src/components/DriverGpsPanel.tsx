@@ -102,8 +102,8 @@ export default function DriverGpsPanel({ onTrip }: { onTrip: boolean }) {
           <div className="grid gap-2 sm:grid-cols-2">
             <input
               className={input}
-              placeholder="Driver email"
-              aria-label="Driver email"
+              placeholder={t("driver.email")}
+              aria-label={t("driver.email")}
               autoComplete="username"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
@@ -111,8 +111,8 @@ export default function DriverGpsPanel({ onTrip }: { onTrip: boolean }) {
             <input
               className={input}
               type="password"
-              placeholder="Password"
-              aria-label="Driver password"
+              placeholder={t("driver.password")}
+              aria-label={t("driver.passwordph")}
               autoComplete="current-password"
               value={loginPass}
               onChange={(e) => setLoginPass(e.target.value)}

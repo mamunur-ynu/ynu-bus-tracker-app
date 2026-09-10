@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import Header from "./components/Header";
 import OverviewCards from "./components/OverviewCards";
 import ShortestRouteDemo from "./components/ShortestRouteDemo";
@@ -158,7 +158,17 @@ const tabs: { id: Tab; labelKey: I18nKey; d: string }[] = [
 export default function App() {
   const [tab, setTab] = useState<Tab>("home");
   const [section, setSection] = useState<Section>("overview");
+
   const { lang, setLang, t } = useLang();
+
+  // The skip link lives in index.html so it exists before React boots, which
+  // means it cannot come from the dictionary at build time. Retitle it once
+  // the app is running and whenever the language changes, so a keyboard user
+  // reading in Chinese does not meet one stray English link.
+  useEffect(() => {
+    const link = document.querySelector<HTMLAnchorElement>('a[href="#main"]');
+    if (link) link.textContent = t("skip.main");
+  }, [t]);
 
   const tabClass = (active: boolean) =>
     `rounded-full px-6 py-2 text-sm font-semibold transition ${
@@ -168,7 +178,7 @@ export default function App() {
     }`;
 
   const langBtn = (active: boolean) =>
-    `rounded-full px-3 py-1 text-xs font-semibold transition ${
+    `rounded-full px-3 py-1.5 text-xs font-semibold transition ${
       active ? "bg-white/10 text-white" : "text-slate-400 hover:text-slate-200"
     }`;
 

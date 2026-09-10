@@ -74,7 +74,11 @@ export default function TripSteps({
                       ? `Remove ${label(stopId)} from favourites`
                       : `Add ${label(stopId)} to favourites`
                   }
-                  className={`text-sm leading-none transition ${
+                  // -m-2 p-2: grows the tap target to ~32px without moving
+                  // the star or pushing the row apart. It measured 13x14,
+                  // which is under half the 24px minimum and genuinely hard
+                  // to hit with a thumb.
+                  className={`-m-2 shrink-0 p-2 text-sm leading-none transition ${
                     starred ? "text-amber-300" : "text-slate-600 hover:text-slate-300"
                   }`}
                 >

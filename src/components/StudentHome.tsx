@@ -118,7 +118,7 @@ export default function StudentHome({ onTrackLive }: StudentHomeProps) {
                   style={{ backgroundColor: next.line.color }}
                 />
                 <p className="text-sm font-semibold text-white">
-                  {next.line.name}
+                  {lang === "zh" ? next.line.nameZh : next.line.name}
                 </p>
                 <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-400">
                   {next.line.code}

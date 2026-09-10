@@ -16,7 +16,10 @@ export const RETURN_MIN = 6;
 
 export interface LineModel {
   code: string;
+  /** English display name. */
   name: string;
+  /** Chinese display name, so screens can follow the reader's language. */
+  nameZh: string;
   color: string;
   stopIds: number[];
   /** Cumulative arrival time (in route-minutes) at each stop in stopIds. */
@@ -57,6 +60,7 @@ export function buildLineModels(): LineModel[] {
     return {
       code: line.code,
       name: line.displayName,
+      nameZh: line.displayNameZh,
       color: line.color,
       stopIds: line.stopIds,
       offsets,

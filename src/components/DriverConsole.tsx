@@ -283,7 +283,7 @@ export default function DriverConsole() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => changeOnboard(-1)}
-                  aria-label="One passenger off"
+                  aria-label={t("driver.paxoff")}
                   className="h-8 w-8 rounded-full border border-slate-600 text-slate-200"
                 >
                   −
@@ -293,7 +293,7 @@ export default function DriverConsole() {
                 </span>
                 <button
                   onClick={() => changeOnboard(1)}
-                  aria-label="One passenger on"
+                  aria-label={t("driver.paxon")}
                   className="h-8 w-8 rounded-full border border-slate-600 text-slate-200"
                 >
                   +

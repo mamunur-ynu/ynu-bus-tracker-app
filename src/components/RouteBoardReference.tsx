@@ -1,17 +1,19 @@
 import { useState } from "react";
 import Card from "./Card";
+import { useLang } from "../lib/i18n";
 
 const BOARD_IMAGE = "/ynu-route-board.jpg";
 
 // Shows the Yunnan University campus bus route-board photo as a reference.
 // The stops and travel times in this dashboard are based on this board.
 export default function RouteBoardReference() {
+  const { t } = useLang();
   const [imageOk, setImageOk] = useState(true);
 
   return (
     <Card
-      title="Campus Bus Route Board"
-      subtitle="Yunnan University reference"
+      title={t("board.title")}
+      subtitle={t("board.subtitle")}
     >
       {imageOk ? (
         <div className="overflow-hidden rounded-xl border border-slate-700/60 bg-ink-950">

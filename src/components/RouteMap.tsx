@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { stops, routes, getStop } from "../data/campusData";
+import { useLang } from "../lib/i18n";
 
 interface RouteMapProps {
   highlightRouteIds: number[];
@@ -17,6 +18,7 @@ export default function RouteMap({
   delayedRouteId,
   pathStopIds,
 }: RouteMapProps) {
+  const { t, lang } = useLang();
   const [imageOk, setImageOk] = useState(true);
 
   return (
@@ -108,7 +110,7 @@ export default function RouteMap({
                 style={{ left: `${midX}%`, top: `${midY}%` }}
               >
                 <span className="whitespace-nowrap rounded bg-violet-500/85 px-1.5 py-0.5 text-[9px] font-medium text-white shadow">
-                  Simulation connector
+                  {t("map.simconnector")}
                 </span>
               </div>
             );
@@ -127,11 +129,13 @@ export default function RouteMap({
               {/* Hover tooltip */}
               <div className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-slate-700 bg-ink-950/95 px-2.5 py-1.5 text-left shadow-xl group-hover:block">
                 <p className="text-[11px] font-semibold text-white">
-                  {stop.englishName}
+                  {lang === "zh" ? stop.chineseName : stop.englishName}
                 </p>
-                <p className="text-[10px] text-slate-400">{stop.chineseName}</p>
+                <p className="text-[10px] text-slate-400">
+                  {lang === "zh" ? stop.englishName : stop.chineseName}
+                </p>
                 <p className="mt-0.5 text-[10px] text-brand-400">
-                  {waiting} waiting
+                  {waiting} {t("home.waiting")}
                 </p>
               </div>
               <div
@@ -154,9 +158,9 @@ export default function RouteMap({
                       : "bg-ink-950/80 text-slate-200"
                   }`}
                 >
-                  {stop.englishName}
+                  {lang === "zh" ? stop.chineseName : stop.englishName}
                   <span className="block text-[9px] font-normal opacity-80">
-                    {stop.chineseName}
+                    {lang === "zh" ? stop.englishName : stop.chineseName}
                   </span>
                 </span>
               </div>
@@ -185,7 +189,7 @@ export default function RouteMap({
             className="inline-block h-0.5 w-6"
             style={{ backgroundImage: "repeating-linear-gradient(90deg,#a78bfa 0 4px,transparent 4px 7px)" }}
           />{" "}
-          Simulation connector
+          {t("map.simconnector")}
         </span>
       </div>
     </div>

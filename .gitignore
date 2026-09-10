@@ -2,3 +2,14 @@ node_modules
 dist
 *.local
 .DS_Store
+
+# Leftovers from Claude-assisted delivery: patch files and the shell scripts
+# used to apply them. These are one-off transport, never part of the project.
+*.patch
+add_*.sh
+fix_*.sh
+improve_*.sh
+rebrand_*.sh
+_to_delete/
+Claude outputs/
+*.log

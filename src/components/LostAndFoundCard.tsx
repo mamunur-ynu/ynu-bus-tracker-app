@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLang } from "../lib/i18n";
-import { busLines, getStop, stops } from "../data/campusData";
+import { busLines, getStop, stops, lineNameIn} from "../data/campusData";
 import {
   cloudFetchLostItems,
   cloudReportLostItem,
@@ -155,7 +155,7 @@ export default function LostAndFoundCard() {
               <option value="">{t("lost.anyline")}</option>
               {busLines.map((l) => (
                 <option key={l.code} value={l.code}>
-                  {l.displayName}
+                  {lineNameIn(l.code, lang)}
                 </option>
               ))}
             </select>

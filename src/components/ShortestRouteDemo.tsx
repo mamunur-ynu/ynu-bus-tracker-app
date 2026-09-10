@@ -7,16 +7,17 @@ import {
   routes,
   busLines,
   DELAY_ROUTE_ID,
-  stopName,
-} from "../data/campusData";
+  stopName, lineNameIn} from "../data/campusData";
 import type { Route } from "../data/campusData";
 import { findShortestRoute } from "../algorithms/dijkstra";
+import { useLang } from "../lib/i18n";
 
 const DELAY_MINUTES = 10;
 
 // Interactive demo of the shortest route search over the campus map.
 // The result comes from the real Dijkstra function, not a fixed value.
 export default function ShortestRouteDemo() {
+  const { t, lang } = useLang();
   const [lineCode, setLineCode] = useState("Z52");
   const [sourceId, setSourceId] = useState(1);
   const [destId, setDestId] = useState(9);
@@ -51,8 +52,8 @@ export default function ShortestRouteDemo() {
 
   return (
     <Card
-      title="Interactive Shortest Route"
-      subtitle="Calculated by a Dijkstra function in TypeScript"
+      title={t("dijkstra.title")}
+      subtitle={t("dijkstra.subtitle")}
     >
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
@@ -65,7 +66,7 @@ export default function ShortestRouteDemo() {
 
         <div className="lg:col-span-2">
           <div className="mb-3">
-            <span className="mb-1 block text-sm text-slate-400">Bus line</span>
+            <span className="mb-1 block text-sm text-slate-400">{t("dijkstra.busline")}</span>
             <div className="flex gap-2">
               {busLines.map((line) => (
                 <button
@@ -78,7 +79,7 @@ export default function ShortestRouteDemo() {
                   }`}
                 >
                   <span className="block text-sm font-medium">
-                    {line.displayName}
+                    {lineNameIn(line.code, lang)}
                   </span>
                   <span className="block text-xs opacity-70">
                     Official route code: {line.code}

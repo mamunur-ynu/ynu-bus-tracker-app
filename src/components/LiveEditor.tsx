@@ -34,11 +34,13 @@ import {
 const POLL_INTERVAL_MS = 20_000;
 import { toast } from "../lib/toast";
 import { safeApply } from "../lib/safeApply";
+import { useLang } from "../lib/i18n";
 
 // A self-contained interactive editor. It keeps its own data in the browser
 // (localStorage) so changes are remembered after a reload. This is the first
 // step toward a real database-backed version.
 export default function LiveEditor() {
+  const { t } = useLang();
   const [stops, setStops] = useState<Stop[]>(() => loadStops());
   const [routes, setRoutes] = useState<Route[]>(() => loadRoutes());
   const [cloudOn, setCloudOn] = useState(false);
@@ -437,13 +439,13 @@ export default function LiveEditor() {
   return (
     <div className="space-y-6">
       <Card
-        title="Live Campus Editor"
+        title={t("editor.heading")}
         subtitle={
           !cloudOn
             ? "Saved locally"
             : realtimeLive
-              ? "Cloud connected · live"
-              : "Cloud connected · refreshing every 20s"
+              ? t("editor.cloud.live")
+              : t("editor.cloud.polling")
         }
       >
 
@@ -630,14 +632,14 @@ export default function LiveEditor() {
                 </p>
                 <input
                   className={input}
-                  placeholder="Email"
+                  placeholder={t("editor.email")}
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                 />
                 <input
                   className={`${input} mt-2`}
                   type="password"
-                  placeholder="Password"
+                  placeholder={t("editor.password")}
                   value={loginPass}
                   onChange={(e) => setLoginPass(e.target.value)}
                 />
@@ -671,7 +673,7 @@ export default function LiveEditor() {
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <label className="text-sm">
-                  <span className={label}>Name (English)</span>
+                  <span className={label}>{t("editor.name.en")}</span>
                   <input
                     className={input}
                     value={stopName}
@@ -680,7 +682,7 @@ export default function LiveEditor() {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className={label}>Name (Chinese)</span>
+                  <span className={label}>{t("editor.name.zh")}</span>
                   <input
                     className={input}
                     value={stopCn}
@@ -689,7 +691,7 @@ export default function LiveEditor() {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className={label}>Map X (0-100)</span>
+                  <span className={label}>{t("editor.mapx")}</span>
                   <input
                     type="number"
                     className={input}
@@ -698,7 +700,7 @@ export default function LiveEditor() {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className={label}>Map Y (0-100)</span>
+                  <span className={label}>{t("editor.mapy")}</span>
                   <input
                     type="number"
                     className={input}
@@ -720,7 +722,7 @@ export default function LiveEditor() {
                 Add a route
               </p>
               <label className="mb-2 block text-sm">
-                <span className={label}>Route name</span>
+                <span className={label}>{t("editor.routename")}</span>
                 <input
                   className={input}
                   value={routeName}
@@ -758,7 +760,7 @@ export default function LiveEditor() {
                   </select>
                 </label>
                 <label className="col-span-2 text-sm">
-                  <span className={label}>Travel time (minutes)</span>
+                  <span className={label}>{t("editor.traveltime")}</span>
                   <input
                     type="number"
                     className={input}
@@ -835,14 +837,14 @@ export default function LiveEditor() {
                           <button
                             onClick={() => changePassengers(s.id, 1)}
                             className="rounded border border-slate-600 px-2 py-0.5 text-slate-300"
-                            title="Add a waiting passenger"
+                            title={t("editor.paxadd")}
                           >
                             +
                           </button>
                           <button
                             onClick={() => changePassengers(s.id, -1)}
                             className="rounded border border-slate-600 px-2 py-0.5 text-slate-300"
-                            title="Remove a waiting passenger"
+                            title={t("editor.paxremove")}
                           >
                             &minus;
                           </button>

@@ -7,9 +7,11 @@ import {
   stopQueues,
   isPeakHour,
 } from "../data/campusData";
+import { useLang } from "../lib/i18n";
 
 // Mirrors the content of the C++ generateReport function.
 export default function ReportSummary() {
+  const { t } = useLang();
   const peakCount = schedules.filter((s) => isPeakHour(s.departure)).length;
 
   // Find the most crowded stop from the sample queues.
@@ -59,7 +61,7 @@ export default function ReportSummary() {
   ];
 
   return (
-    <Card title="System Report Summary" subtitle="Same fields as reports/report.txt">
+    <Card title={t("report.title")} subtitle={t("report.subtitle")}>
       <dl className="divide-y divide-slate-800">
         {rows.map((row) => (
           <div key={row.label} className="flex justify-between gap-4 py-2">

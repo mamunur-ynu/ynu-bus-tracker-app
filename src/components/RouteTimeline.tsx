@@ -1,10 +1,12 @@
 import { useState } from "react";
 import Card from "./Card";
-import { busLines, stopName, stopChinese, edgeTime } from "../data/campusData";
+import { busLines, stopName, stopChinese, edgeTime, lineNameIn} from "../data/campusData";
+import { useLang } from "../lib/i18n";
 
 // A route timeline that lists the stops of a bus line in order.
 // It shows the English name, the Chinese name, and the cumulative time.
 export default function RouteTimeline() {
+  const { t, lang } = useLang();
   const [lineCode, setLineCode] = useState("Z52");
   const line = busLines.find((l) => l.code === lineCode) ?? busLines[0];
 
@@ -17,10 +19,10 @@ export default function RouteTimeline() {
   });
 
   return (
-    <Card title="Route Timeline" subtitle={line.label}>
+    <Card title={t("timeline.title")} subtitle={line.label}>
       <div className="mb-2">
         <p className="text-base font-semibold text-slate-100">
-          {line.displayName}
+          {lineNameIn(line.code, lang)}
         </p>
         <p className="text-xs text-slate-400">Official route code: {line.code}</p>
       </div>
@@ -35,7 +37,7 @@ export default function RouteTimeline() {
                 : "border border-slate-700 bg-ink-900 text-slate-300"
             }`}
           >
-            <span className="block text-sm font-medium">{l.displayName}</span>
+            <span className="block text-sm font-medium">{lineNameIn(l.code, lang)}</span>
             <span className="block text-[11px] opacity-70">{l.code}</span>
           </button>
         ))}

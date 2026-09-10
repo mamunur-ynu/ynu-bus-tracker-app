@@ -34,17 +34,63 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | | |
 |---|---|
 | Campus stops · route edges | 12 · 10 |
+| App sections | 7 (Home · Live Map · Dashboard · 3D City · Ask AI · Driver · Live Editor) |
 | Bus lines simulated in real time | 2 (Z52, Z53) |
 | Route search | Dijkstra, computed client-side in **< 1 ms** |
 | Initial JS payload | **~132 KB gzipped**, split into app / React / Supabase vendor chunks so a code change doesn't invalidate the whole cache — the 3D scene is a separate lazy chunk (135 KB gzipped, loaded only when that tab opens) |
 | Imagery | route board optimised **4.7 MB → 282 KB** (−94%) |
 | Offline | full app shell + campus imagery precached (PWA, 15 entries) |
-| Tests | 124 unit tests, run on every push by GitHub Actions |
+| Tests | 221 unit tests, run on every push by GitHub Actions |
 | Accessibility | skip link, landmarks, `aria-pressed`/`aria-current`, live regions, reduced-motion, `<html lang>` follows the toggle |
 | Languages | English + 中文, full UI toggle |
 | Data safety | admin can export/import a full JSON backup — works with zero network |
 
 *Lighthouse scores measured with the Lighthouse CLI against the production build (`npm run build && npm run preview`); real-world scores vary with network and device.*
+
+## 🔍 What is real, what is simulated, what is unproven
+
+Every project of this kind mixes real data with stand-ins. Rather than leave a
+reader to guess which is which, here is the line, drawn explicitly.
+
+### Real
+
+| Thing | Why it counts as real |
+|---|---|
+| Dijkstra shortest path | Genuinely computed in TypeScript at request time, with unit tests. Nothing is looked up from a table of answers. |
+| Route network (Z52 / Z53) | Stops and travel times were read off the campus route board — the photograph in the Routes tab is the source. |
+| Cloud database | Supabase PostgreSQL. Row-level security is enforced by the database, and was tested by impersonating an anonymous visitor, not by reading the policy text. |
+| Realtime sync + admin auth | Supabase Realtime and Supabase Auth. A change on one device really does appear on another. |
+| Driver GPS | `navigator.geolocation.watchPosition` — the device's actual GPS, including real speed, heading and accuracy. No synthetic path. |
+| Weather | Live measurements from Open-Meteo. Labelled **Kunming**, not "campus", because the API answers for a city coordinate and there is no sensor on campus. |
+| Ratings and Lost & Found | Real rows written to, and read from, the database by anyone using the app. |
+
+### Simulated, and labelled as such in the UI
+
+| Thing | What it actually is |
+|---|---|
+| Live arrivals countdown | A simulation clock shared by every screen, not the position of a real vehicle. The board says "simulated real-time". |
+| Buses in the 3D city | The same simulation, driving the real route loops. They obey the traffic lights, but no bus on campus is being tracked. |
+| Waiting-passenger counts | Numbers stored in the database and edited by an admin. There is no sensor counting people at a stop. |
+| Onboard / capacity figures | Entered by an admin, for the same reason. |
+| Stop positions on the 2D map | Percentages of the map image, not latitude and longitude. |
+
+### Built but not yet proven with real data
+
+These features are implemented and tested in code, but nobody has yet put real
+data through them. That is a statement about the project's history, not about
+whether the code works.
+
+| Thing | Current state |
+|---|---|
+| End-to-end GPS tracking | `bus_locations` holds **0 rows**. The driver app has never been carried on a real trip. |
+| Real-world stop coordinates | **0 of 12** stops have latitude/longitude captured on site, so real-world distance and ETA cannot be computed yet. |
+| Lost & Found | **0** items posted. |
+| Ride ratings | **0** ratings submitted. |
+| Driver accounts | **1** account exists, used for both admin and driver testing. |
+
+The honest next step for this project is not another feature — it is carrying a
+phone along a route to put the first real GPS point in the database.
+
 
 ## 🎬 Screenshots
 
@@ -73,6 +119,12 @@ Everything is backed by a real cloud database with live sync across devices, gat
 - **Full CRUD + passenger crowding** — add and remove stops/routes and set waiting-passenger counts; the busiest stop is highlighted.
 - **JSON backup/restore** — an admin can export the full campus dataset to a file and re-import it later, so a flaky connection to the cloud never risks losing data.
 - **Bilingual EN / 中文** — a language toggle translates the whole UI; stop names are bilingual.
+- **Real GPS tracking architecture** — a driver signs in, starts a trip, and the browser's Geolocation API publishes real position, speed, heading and accuracy to the database every few seconds; students watch the bus move on a Leaflet map with interpolation and a freshness indicator. (See the table above for what has and has not been exercised with real data.)
+- **Weather that answers a rider's question** — current Kunming conditions from Open-Meteo, phrased as advice about waiting at a stop rather than generic weather chatter. Degrades to a clear "unavailable" state with a retry when the network blocks it.
+- **Ride ratings** — average stars per line, with an unrated line shown as "no ratings yet" rather than a misleading 0.0.
+- **Lost & Found** — report something left on a bus; anyone can read and post, only an admin can mark an item returned.
+- **Arrival alerts** — pick a stop and be told a few minutes before the bus. Fires only when the app is not the visible tab, and only once per approach.
+- **Fleet management** — an admin can add, edit and retire buses; capacity feeds the rider-facing crowding chip.
 - **Installable PWA** — add to a phone home screen and open it like a native app.
 - **CI/CD** — every push is built and deployed automatically.
 
@@ -140,7 +192,8 @@ npm run preview    # preview the production build
 netlify/functions/
   assistant.mts           serverless AI agent (tool calling → Dijkstra)
 src/
-  App.tsx                 tabs: Dashboard · 3D City · Ask AI · Live Editor
+  App.tsx                 tabs: Home · Live Map · Dashboard · 3D City ·
+                          Ask AI · Driver · Live Editor
   algorithms/dijkstra.ts  shortest-path engine (+ unit tests)
   components/
     MiniCity3D.tsx        the Three.js 3D city
@@ -148,8 +201,19 @@ src/
     LiveArrivals.tsx      real-time ETA board
     ShortestRouteDemo.tsx interactive map + route
     LiveEditor.tsx        cloud CRUD + admin auth
+    LiveBusMap.tsx        Leaflet map of real GPS positions
+    DriverConsole.tsx     driver sign-in, trip start, GPS broadcast
+    StudentHome.tsx       rider home: next bus, weather, alerts, ratings
+    WeatherPanel.tsx      Open-Meteo conditions and riding advice
   data/campusData.ts      stops, routes, bus lines
-  lib/                    cloud, persistence, i18n, toast, assistant
+  lib/
+    arrivals.ts           one shared simulation clock for every screen
+    traffic.ts            signal phases + the rules a bus obeys (tested)
+    geo.ts                haversine, bearing, ETA from distance and speed
+    weather.ts            Open-Meteo fetch and defensive parsing
+    ratings.ts            per-line averages and the rating cooldown
+    notify.ts             when an arrival alert may and may not fire
+    cloud.ts              Supabase access for every table
 ```
 
 ## 📚 Context

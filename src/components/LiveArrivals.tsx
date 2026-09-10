@@ -59,7 +59,7 @@ export default function LiveArrivals() {
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: line.color }}
                 />
-                <p className="text-sm font-semibold text-white">{line.name}</p>
+                <p className="text-sm font-semibold text-white">{lang === "zh" ? line.nameZh : line.name}</p>
                 <span className="ml-auto rounded-full border border-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-400">
                   {line.code}
                 </span>

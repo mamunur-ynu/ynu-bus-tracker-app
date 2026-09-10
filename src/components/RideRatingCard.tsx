@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLang } from "../lib/i18n";
-import { busLines } from "../data/campusData";
+import { busLines, lineNameIn} from "../data/campusData";
 import { cloudFetchRatings, cloudRateRide, isCloudConfigured } from "../lib/cloud";
 import type { RideRating } from "../lib/cloud";
 import {
@@ -59,7 +59,7 @@ function Stars({ average }: { average: number | null }) {
  * rather than dressed up as security.
  */
 export default function RideRatingCard() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [ratings, setRatings] = useState<RideRating[]>([]);
   const [line, setLine] = useState(busLines[0]?.code ?? "");
   const [stars, setStars] = useState(0);
@@ -147,7 +147,7 @@ export default function RideRatingCard() {
           >
             {busLines.map((l) => (
               <option key={l.code} value={l.code}>
-                {l.displayName}
+                {lineNameIn(l.code, lang)}
               </option>
             ))}
           </select>
@@ -163,7 +163,9 @@ export default function RideRatingCard() {
                   setStars(n);
                   setNote(null);
                 }}
-                className="rounded p-0.5 transition-transform hover:scale-110"
+                // p-1.5 rather than p-0.5: the star glyph is 18px, which left a
+                // 22px target - under the 24px minimum for a touch control.
+                className="rounded p-1.5 transition-transform hover:scale-110"
               >
                 <Star fill={n <= stars ? "full" : "none"} />
               </button>

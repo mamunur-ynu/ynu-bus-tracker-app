@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import Card from "./Card";
-import { stops, routes, busLines, getStop } from "../data/campusData";
+import { stops, routes, busLines, getStop, lineNameIn} from "../data/campusData";
 import { useLang } from "../lib/i18n";
 // The signal timing and the bus-driving rules live in one tested module, so
 // the lamp you see and the bus obeying it can never disagree.
@@ -152,7 +152,7 @@ const HORIZON = 0x14213d;
 // A realistic 3D miniature campus: shadows, lit-window buildings, trees,
 // street lamps, marked roads and detailed buses on the real route loops.
 export default function MiniCity3D() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1185,7 +1185,7 @@ export default function MiniCity3D() {
                 className="h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: l.color }}
               />
-              {l.displayName}
+              {lineNameIn(l.code, lang)}
             </span>
           ))}
         </div>

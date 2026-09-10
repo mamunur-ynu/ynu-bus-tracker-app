@@ -3,12 +3,13 @@ import {
   schedules,
   isPeakHour,
   formatTime,
-  lineDisplayName,
+  lineNameIn,
   MORNING_PEAK_START_HOUR,
   MORNING_PEAK_END_HOUR,
   AFTERNOON_PEAK_START_HOUR,
   AFTERNOON_PEAK_END_HOUR,
 } from "../data/campusData";
+import { useLang } from "../lib/i18n";
 
 const LEFT = 40;
 const RIGHT = 780;
@@ -21,9 +22,10 @@ function hourToX(hour: number): number {
 
 // A 24 hour timeline that shades the two peak windows and marks the trips.
 export default function PeakHourTimeline() {
+  const { t, lang } = useLang();
   return (
-    <Card title="Peak-Hour Schedule Timeline" subtitle="Morning 08-10, Afternoon 16-18">
-      <svg viewBox="0 0 800 150" className="h-auto w-full" role="img" aria-label="Schedule timeline">
+    <Card title={t("peak.title")} subtitle={t("peak.subtitle")}>
+      <svg viewBox="0 0 800 150" className="h-auto w-full" role="img" aria-label={t("peak.aria")}>
         {/* Peak windows */}
         <rect
           x={hourToX(MORNING_PEAK_START_HOUR)}
@@ -87,7 +89,7 @@ export default function PeakHourTimeline() {
             >
               <span className="text-slate-300">
                 {formatTime(s.departure)} - {formatTime(s.arrival)} -{" "}
-                {lineDisplayName(s.line)} ({s.line})
+                {lineNameIn(s.line, lang)} ({s.line})
               </span>
               <span
                 className={`rounded-md px-2 py-0.5 text-xs ${

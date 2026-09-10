@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Card from "./Card";
-import { busLines, type Bus } from "../data/campusData";
+import { busLines, type Bus, lineNameIn} from "../data/campusData";
 import { useLang } from "../lib/i18n";
 import { toast } from "../lib/toast";
 import {
@@ -303,7 +303,7 @@ export default function FleetPanel() {
             >
               {busLines.map((l) => (
                 <option key={l.code} value={l.code}>
-                  {l.code} · {lang === "zh" ? l.code : l.displayName}
+                  {l.code} · {lineNameIn(l.code, lang)}
                 </option>
               ))}
             </select>

@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import type { Stop, Route } from "../data/campusData";
 import { toast } from "../lib/toast";
+import { useLang } from "../lib/i18n";
 
 interface DataBackupProps {
   stops: Stop[];
@@ -40,6 +41,7 @@ function isRoute(v: unknown): v is Route {
 }
 
 export default function DataBackup({ stops, routes, onImport }: DataBackupProps) {
+  const { t } = useLang();
   const fileInput = useRef<HTMLInputElement>(null);
 
   function exportJson() {
@@ -96,7 +98,7 @@ export default function DataBackup({ stops, routes, onImport }: DataBackupProps)
 
   return (
     <div className="rounded-xl border border-slate-700/50 bg-ink-950/40 p-3">
-      <p className="mb-1 text-sm font-medium text-slate-200">Backup &amp; restore</p>
+      <p className="mb-1 text-sm font-medium text-slate-200">{t("backup.title")}</p>
       <p className="mb-3 text-xs text-slate-400">
         Save a snapshot to your computer, or load one back — works even with
         no network at all, so a flaky connection to the cloud never risks

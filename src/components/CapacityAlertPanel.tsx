@@ -1,4 +1,5 @@
 import Card from "./Card";
+import { useLang } from "../lib/i18n";
 
 interface Scenario {
   bus: string;
@@ -38,8 +39,9 @@ const scenarios: Scenario[] = [
 
 // Shows three capacity examples: enough, not enough, and full.
 export default function CapacityAlertPanel() {
+  const { t } = useLang();
   return (
-    <Card title="Capacity Alerts" subtitle="Waiting passengers vs free seats">
+    <Card title={t("capacity.title")} subtitle={t("capacity.subtitle")}>
       <div className="space-y-3">
         {scenarios.map((sc, index) => {
           const status = capacityStatus(sc.waiting, sc.capacity, sc.onboard);

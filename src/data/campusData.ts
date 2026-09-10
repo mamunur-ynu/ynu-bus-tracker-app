@@ -66,6 +66,9 @@ export interface BusLine {
   label: string;
   color: string;
   stopIds: number[];
+  /** The line's name in Chinese. Z52/Z53 are the real route codes;
+   *  these display names are the project's own branding. */
+  displayNameZh: string;
 }
 
 // Peak-hour windows, same as the C++ constants in Common.h.
@@ -115,6 +118,7 @@ export const busLines: BusLine[] = [
   {
     code: "Z52",
     displayName: "YNU Engineering Express",
+    displayNameZh: "云大工学院专线",
     label: "YNU Engineering Express (East Gate - Engineering College)",
     // Royal Blue: the primary YNU Smart Mobility brand color.
     color: "#2563eb",
@@ -123,6 +127,7 @@ export const busLines: BusLine[] = [
   {
     code: "Z53",
     displayName: "YNU Campus Connector",
+    displayNameZh: "云大校园环线",
     label: "YNU Campus Connector (East Gate - West Gate)",
     // Electric Green: the secondary brand accent, so the app's two real
     // bus lines now map directly onto the two-tone brand identity.
@@ -178,6 +183,26 @@ export function getStop(id: number): Stop | undefined {
 
 export function stopName(id: number): string {
   return getStop(id)?.englishName ?? "Unknown";
+}
+
+/**
+ * A stop's name in the reader's language.
+ *
+ * stopName() above is English-only, which is right for logs and exports but
+ * wrong on screen: in Chinese mode the route table was listing "East Gate to
+ * School Hospital" in the middle of an otherwise Chinese page.
+ */
+export function stopNameIn(id: number, lang: "en" | "zh"): string {
+  const s = getStop(id);
+  if (!s) return "Unknown";
+  return lang === "zh" ? s.chineseName || s.englishName : s.englishName;
+}
+
+/** A bus line's display name in the reader's language. */
+export function lineNameIn(code: string, lang: "en" | "zh"): string {
+  const l = busLines.find((b) => b.code === code);
+  if (!l) return code;
+  return lang === "zh" ? l.displayNameZh || l.displayName : l.displayName;
 }
 
 export function stopChinese(id: number): string {
