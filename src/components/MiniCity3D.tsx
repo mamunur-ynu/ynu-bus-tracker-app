@@ -28,28 +28,117 @@ function distToSeg(px: number, pz: number, a: THREE.Vector3, b: THREE.Vector3) {
   return Math.hypot(px - cx, pz - cz);
 }
 
-// A canvas texture of a building facade with a grid of lit / unlit windows.
-function facadeTexture(wall: string, seed: number) {
+/**
+ * A canvas texture of a building facade: a grid of lit / unlit windows on a
+ * wall that darkens towards street level.
+ *
+ * `glow` and `litRatio` are parameters rather than constants on purpose. The
+ * first version of this hard-coded one warm yellow and one lit-window ratio,
+ * so all forty buildings came out identical - the eye read the whole city as
+ * a single shape stamped over and over. Real skylines mix warm offices, cool
+ * fluorescent floors and half-empty towers, and that variety is most of what
+ * makes a box look like a building.
+ */
+function facadeTexture(
+  wall: string,
+  glow: string,
+  seed: number,
+  litRatio: number
+) {
   const c = document.createElement("canvas");
   c.width = 64;
   c.height = 128;
   const ctx = c.getContext("2d");
   if (!ctx) return new THREE.CanvasTexture(c);
-  ctx.fillStyle = wall;
+
+  // Wall, shading down to near-black at the base so towers feel planted on
+  // the ground instead of floating as evenly-lit slabs.
+  const wash = ctx.createLinearGradient(0, 0, 0, 128);
+  wash.addColorStop(0, wall);
+  wash.addColorStop(1, "#080e1c");
+  ctx.fillStyle = wash;
   ctx.fillRect(0, 0, 64, 128);
-  const cols = 4;
-  const rows = 8;
-  for (let y = 0; y < rows; y++) {
+
+  // Narrow or wide window bays, again just for variety between buildings.
+  const cols = seed % 2 === 0 ? 4 : 3;
+  const colW = 64 / cols;
+  for (let y = 0; y < 8; y++) {
     for (let x = 0; x < cols; x++) {
-      const on = rng(seed + x * 3 + y * 7) > 0.4;
-      ctx.fillStyle = on ? "#ffd98a" : "#0b1424";
-      ctx.fillRect(6 + x * 14, 6 + y * 14, 9, 11);
+      const on = rng(seed + x * 3 + y * 7) > 1 - litRatio;
+      ctx.fillStyle = on ? glow : "#0b1424";
+      ctx.fillRect(x * colW + colW * 0.2, 6 + y * 14, colW * 0.6, 10);
     }
   }
+
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
+
+/**
+ * A soft round blob, white in the middle and fading to nothing at the rim.
+ * Used twice: tinted and laid flat under each bus as its glow, and stretched
+ * across the ground as the pool of light the campus sits in.
+ */
+function radialTexture(size = 128, inner = "rgba(255,255,255,1)") {
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(c);
+  const g = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2
+  );
+  g.addColorStop(0, inner);
+  g.addColorStop(0.45, "rgba(255,255,255,0.35)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/**
+ * The face of a bus-stop sign: a little bus pictogram on green.
+ *
+ * A plain coloured panel worked as "not a street lamp", but twelve blank
+ * rectangles ended up being the loudest thing on screen - louder than the
+ * buses, which is backwards. A glyph says "bus stop" outright, so the sign
+ * can be smaller and dimmer and still be understood.
+ */
+function stopSignTexture() {
+  const c = document.createElement("canvas");
+  c.width = 64;
+  c.height = 64;
+  const ctx = c.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(c);
+  ctx.fillStyle = "#22c55e";
+  ctx.fillRect(0, 0, 64, 64);
+  ctx.fillStyle = "#06301a";
+  // Body
+  ctx.beginPath();
+  ctx.roundRect(12, 14, 40, 30, 5);
+  ctx.fill();
+  // Windscreen band and wheels, in the green again so they read as cut-outs.
+  ctx.fillStyle = "#22c55e";
+  ctx.fillRect(16, 19, 32, 9);
+  ctx.fillRect(18, 42, 7, 6);
+  ctx.fillRect(39, 42, 7, 6);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// The colour the sky fades to at the horizon. Fog, the far edge of the
+// ground and the bottom of the sky all use it, so the campus dissolves into
+// the distance instead of ending at a hard black line.
+const HORIZON = 0x14213d;
 
 // A realistic 3D miniature campus: shadows, lit-window buildings, trees,
 // street lamps, marked roads and detailed buses on the real route loops.
@@ -65,8 +154,41 @@ export default function MiniCity3D() {
     ).matches;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x070b16);
-    scene.fog = new THREE.Fog(0x070b16, SIZE * 1.5, SIZE * 3.4);
+    // Range is set once the camera distance is known (see frameCampus) - fog
+    // that starts nearer than the campus would grey out the city itself.
+    const fog = new THREE.Fog(HORIZON, SIZE * 2.2, SIZE * 5.2);
+    scene.fog = fog;
+
+    // Night sky: a deep navy overhead easing into the horizon colour, painted
+    // on the inside of a big sphere. A flat background colour left the city
+    // sitting on a dead black rectangle with a visible edge where the ground
+    // stopped; a graded sky gives the scene somewhere to recede into.
+    const skyCanvas = document.createElement("canvas");
+    skyCanvas.width = 4;
+    skyCanvas.height = 256;
+    const skyCtx = skyCanvas.getContext("2d");
+    if (skyCtx) {
+      const g = skyCtx.createLinearGradient(0, 0, 0, 256);
+      g.addColorStop(0, "#060a17");
+      g.addColorStop(0.55, "#0d1730");
+      // Bottom stop is exactly HORIZON, the colour the fog and the far ground
+      // also settle on, so sky and ground meet with no visible seam.
+      g.addColorStop(1, "#14213d");
+      skyCtx.fillStyle = g;
+      skyCtx.fillRect(0, 0, 4, 256);
+    }
+    const skyTex = new THREE.CanvasTexture(skyCanvas);
+    skyTex.colorSpace = THREE.SRGBColorSpace;
+    const sky = new THREE.Mesh(
+      new THREE.SphereGeometry(SIZE * 8, 32, 16),
+      new THREE.MeshBasicMaterial({
+        map: skyTex,
+        side: THREE.BackSide,
+        fog: false,
+        depthWrite: false,
+      })
+    );
+    scene.add(sky);
 
     const camera = new THREE.PerspectiveCamera(
       40,
@@ -74,7 +196,6 @@ export default function MiniCity3D() {
       0.1,
       1000
     );
-    camera.position.set(SIZE * 0.95, SIZE * 0.72, SIZE * 1.08);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
@@ -89,12 +210,124 @@ export default function MiniCity3D() {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.minDistance = SIZE * 0.7;
-    controls.maxDistance = SIZE * 2.2;
-    controls.maxPolarAngle = 1.4;
+    controls.maxPolarAngle = 1.32;
     controls.target.set(0, 2.5, 0);
     controls.autoRotate = !reduce;
     controls.autoRotateSpeed = 0.5;
+
+    /*
+     * Framing the whole campus, at whatever shape the canvas happens to be.
+     *
+     * The camera used to sit at a hand-tuned position, and it was simply too
+     * close: over half the campus fell outside the frame and the nearest
+     * tower block filled a third of the screen. Worse, one fixed distance
+     * cannot be right for both a wide desktop card and a narrow phone -
+     * a tall thin viewport needs the camera much further back for the same
+     * ground to fit, so whatever number looked right on a laptop clipped on a
+     * phone.
+     *
+     * So instead of guessing, measure: take a ring of points around the
+     * campus (at ground level and at roof height), project them through the
+     * camera, and pull back until they all land inside the frame. Two or
+     * three passes converge, and it stays correct at any aspect ratio.
+     */
+    /*
+     * What has to stay in frame: a box around every stop, tall enough to
+     * clear the buildings beside it.
+     *
+     * Deliberately the stops themselves rather than a circle around the map
+     * centre. The route network does not sit neatly in the middle of the
+     * campus, so fitting a centred circle both wasted a lot of frame on empty
+     * ground and left the city sitting off to one side of it. The outer
+     * buildings are scenery and are allowed to run off the edges.
+     */
+    const MARGIN = 9; // verges, stop signs and the first row of trees
+    const samples: THREE.Vector3[] = [];
+    for (const s of stops) {
+      const p = worldOf(s.x, s.y);
+      for (const dx of [-MARGIN, MARGIN]) {
+        for (const dz of [-MARGIN, MARGIN]) {
+          samples.push(
+            new THREE.Vector3(p.x + dx, 0, p.z + dz),
+            new THREE.Vector3(p.x + dx, 9, p.z + dz)
+          );
+        }
+      }
+    }
+    const campusRadius = Math.max(
+      ...samples.map((p) => Math.hypot(p.x, p.z))
+    );
+
+    // Fixed viewing direction: a three-quarter view from above, high enough
+    // to see the road network but low enough to keep the buildings looking
+    // like buildings rather than floor plans.
+    const viewDir = new THREE.Vector3(0.62, 0.56, 0.72).normalize();
+
+    function frameCampus() {
+      let dist = campusRadius * 2.2;
+      controls.target.set(0, 2.5, 0); // reset, so resizes don't accumulate
+      const screenUp = new THREE.Vector3();
+      const screenRight = new THREE.Vector3();
+      for (let pass = 0; pass < 6; pass++) {
+        camera.position.copy(viewDir).multiplyScalar(dist).add(controls.target);
+        camera.lookAt(controls.target);
+        camera.updateMatrixWorld();
+        camera.updateProjectionMatrix();
+
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        for (const p of samples) {
+          const v = p.clone().project(camera);
+          minX = Math.min(minX, v.x);
+          maxX = Math.max(maxX, v.x);
+          minY = Math.min(minY, v.y);
+          maxY = Math.max(maxY, v.y);
+        }
+
+        // Slide the camera until the campus is centred in the frame.
+        // Aiming at the map's origin is not the same as centring the picture:
+        // the route network sits off to one side of the campus, and seen from
+        // above at an angle its far edge projects much higher than its near
+        // edge - together those parked the city up in one corner with a band
+        // of empty ground under it.
+        screenUp.set(0, 1, 0).applyQuaternion(camera.quaternion);
+        screenRight.set(1, 0, 0).applyQuaternion(camera.quaternion);
+        const halfFrame = Math.tan((camera.fov * Math.PI) / 360) * dist;
+        controls.target
+          .addScaledVector(screenUp, ((minY + maxY) / 2) * halfFrame)
+          .addScaledVector(
+            screenRight,
+            ((minX + maxX) / 2) * halfFrame * camera.aspect
+          );
+
+        // How much of the frame the campus fills: 1.0 touches the edges, so
+        // aim for 0.94 and keep a little breathing room.
+        const fill = Math.max((maxX - minX) / 2, (maxY - minY) / 2);
+        if (Math.abs(fill - 0.94) < 0.01) break;
+        dist *= fill / 0.94;
+      }
+      camera.position.copy(viewDir).multiplyScalar(dist).add(controls.target);
+      camera.lookAt(controls.target);
+      camera.updateProjectionMatrix();
+
+      controls.minDistance = dist * 0.35;
+      controls.maxDistance = dist * 1.5;
+      // Fog begins just past the campus and is total well before the ground
+      // ends, which is what hides the edge of the world.
+      fog.near = dist * 0.95;
+      fog.far = dist * 2.1;
+    }
+    frameCampus();
+
+    // Re-frame on resize, but stop as soon as the viewer takes control -
+    // yanking the camera back to the default while someone is orbiting the
+    // city would feel broken.
+    let userTookOver = false;
+    controls.addEventListener("start", () => {
+      userTookOver = true;
+    });
 
     // Lighting — hemisphere ambient + a warm key light casting shadows.
     scene.add(new THREE.HemisphereLight(0x9fc4ff, 0x0a1220, 0.85));
@@ -114,19 +347,68 @@ export default function MiniCity3D() {
     rim.position.set(-SIZE, SIZE * 0.6, -SIZE);
     scene.add(rim);
 
-    // Ground
+    /*
+     * Ground.
+     *
+     * This was a flat near-black square with a grid drawn on top, and from a
+     * distance you could see exactly where it stopped: a hard straight edge
+     * with nothing beyond it. It is now a disc, so there is no corner to
+     * catch the eye, painted with a pool of light that is brightest under the
+     * campus and fades out to the horizon colour - which the fog also uses,
+     * so the edge of the world is genuinely invisible.
+     */
+    const groundCanvas = document.createElement("canvas");
+    groundCanvas.width = 512;
+    groundCanvas.height = 512;
+    const gctx = groundCanvas.getContext("2d");
+    if (gctx) {
+      gctx.fillStyle = "#14213d";
+      gctx.fillRect(0, 0, 512, 512);
+      const pool = gctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+      pool.addColorStop(0, "#1d2d4f");
+      pool.addColorStop(0.42, "#16243f");
+      pool.addColorStop(1, "#14213d");
+      gctx.fillStyle = pool;
+      gctx.fillRect(0, 0, 512, 512);
+      // Faint survey grid, baked in rather than drawn as a separate mesh so
+      // it fades out with the light instead of ending in a square.
+      gctx.strokeStyle = "rgba(96,150,235,0.07)";
+      gctx.lineWidth = 1;
+      for (let i = 0; i <= 32; i++) {
+        const p = (i / 32) * 512;
+        gctx.beginPath();
+        gctx.moveTo(p, 0);
+        gctx.lineTo(p, 512);
+        gctx.moveTo(0, p);
+        gctx.lineTo(512, p);
+        gctx.stroke();
+      }
+    }
+    const groundTex = new THREE.CanvasTexture(groundCanvas);
+    groundTex.colorSpace = THREE.SRGBColorSpace;
     const ground = new THREE.Mesh(
-      new THREE.BoxGeometry(SIZE * 2.4, 1, SIZE * 2.4),
-      new THREE.MeshStandardMaterial({ color: 0x0d1526, roughness: 1 })
+      new THREE.CircleGeometry(SIZE * 2.6, 96),
+      new THREE.MeshStandardMaterial({ map: groundTex, roughness: 1 })
     );
-    ground.position.y = -0.5;
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
     ground.receiveShadow = true;
     scene.add(ground);
-    const grid = new THREE.GridHelper(SIZE * 2.3, 40, 0x1a2a4a, 0x0f1a30);
-    grid.position.y = 0.015;
-    (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.5;
-    scene.add(grid);
+
+    // Plain land stretching far past the lit campus, in exactly the colour
+    // the pool of light fades to. Without it the lit disc simply stopped, and
+    // its curved edge against the sky made the campus look like it was
+    // sitting on a small planet.
+    // Same material type as the lit ground, not an unlit one: an unlit plane
+    // sat at a slightly different brightness and left a faint ring where the
+    // two met.
+    const outland = new THREE.Mesh(
+      new THREE.CircleGeometry(SIZE * 14, 64),
+      new THREE.MeshStandardMaterial({ color: HORIZON, roughness: 1 })
+    );
+    outland.rotation.x = -Math.PI / 2;
+    outland.position.y = -0.05;
+    scene.add(outland);
 
     const roadSegs: [THREE.Vector3, THREE.Vector3][] = [];
 
@@ -232,28 +514,55 @@ export default function MiniCity3D() {
         }
       });
 
-    // Stops: post + glowing bulb
+    /*
+     * Stops.
+     *
+     * These used to be a post with a glowing white ball on top - which is
+     * also, exactly, what the street lamps are. Scanning the city you could
+     * not tell a bus stop from a lamp post, on the one screen whose whole job
+     * is showing where the buses stop. So a stop is now a flat green marker
+     * ring on the tarmac with a sign board above it: a different colour, a
+     * different shape, readable at a glance from any angle.
+     */
     const postMat = new THREE.MeshStandardMaterial({ color: 0x2a3550 });
-    const bulbMat = new THREE.MeshStandardMaterial({
-      color: 0xe6f3ff,
-      emissive: 0x9fd8ff,
-      emissiveIntensity: 1.6,
+    const stopSignTex = stopSignTexture();
+    const stopSignMat = new THREE.MeshStandardMaterial({
+      map: stopSignTex,
+      emissiveMap: stopSignTex,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.7,
     });
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x22c55e,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+    });
+    const ringGeo = new THREE.RingGeometry(1.5, 1.9, 32);
     stops.forEach((s) => {
       const p = worldOf(s.x, s.y);
+
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(p.x, 0.36, p.z);
+      scene.add(ring);
+
       const post = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22, 0.22, 2.4, 8),
+        new THREE.CylinderGeometry(0.16, 0.16, 3, 8),
         postMat
       );
-      post.position.set(p.x, 1.2, p.z);
+      post.position.set(p.x, 1.5, p.z);
       post.castShadow = true;
       scene.add(post);
-      const bulb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.55, 16, 16),
-        bulbMat
+
+      // Square sign board, so it stays a distinct silhouette from the round
+      // lamp heads even when the camera is far out.
+      const board = new THREE.Mesh(
+        new THREE.BoxGeometry(1.05, 1.05, 0.14),
+        stopSignMat
       );
-      bulb.position.set(p.x, 2.7, p.z);
-      scene.add(bulb);
+      board.position.set(p.x, 3.3, p.z);
+      scene.add(board);
     });
 
     // Crosswalks + traffic lights at the main junction stops
@@ -395,9 +704,33 @@ export default function MiniCity3D() {
       if (ctx) signals.push({ red, amber, green, offset: k * 3.4, ctx, tex, lastKey: "" });
     });
 
-    // City blocks: buildings placed on a grid, avoiding the roads
-    const wallTints = ["#2a3556", "#243a5e", "#33305c", "#22405e", "#2c3350"];
-    const facades = wallTints.map((w, i) => facadeTexture(w, i * 11 + 1));
+    /*
+     * City blocks: buildings on a jittered grid, keeping clear of the roads.
+     *
+     * Two things were wrong with the old version. Every building shared one
+     * facade palette and one window colour, so the skyline read as a single
+     * shape repeated; and every building was the same height right out to the
+     * edge of the map, which put a solid wall of towers between the camera
+     * and the roads this screen exists to show. Now the mix of wall colour,
+     * window colour and lit-window ratio varies per building, and height
+     * falls away towards the rim so the campus reads as a bowl - tall in the
+     * middle, low at the edges, roads visible from outside.
+     */
+    const facadeStyles: Array<[string, string, number]> = [
+      // wall tint, window glow, fraction of windows lit
+      ["#2a3556", "#ffd98a", 0.62],
+      ["#243a5e", "#cfe4ff", 0.45],
+      ["#33305c", "#ffe9b5", 0.35],
+      ["#22405e", "#a8d8ff", 0.55],
+      ["#2c3350", "#ffc98a", 0.28],
+      ["#1f3350", "#e8f4ff", 0.7],
+      ["#302a4e", "#ffd06a", 0.4],
+      ["#1d3a54", "#bcf0dd", 0.5],
+    ];
+    const facades = facadeStyles.map(([wall, glow, lit], i) =>
+      facadeTexture(wall, glow, i * 11 + 1, lit)
+    );
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x1b2438 });
     let bi = 0;
     for (let gx = -SIZE * 1.05; gx <= SIZE * 1.05; gx += 7) {
       for (let gz = -SIZE * 1.05; gz <= SIZE * 1.05; gz += 7) {
@@ -409,31 +742,54 @@ export default function MiniCity3D() {
           near = Math.min(near, distToSeg(jx, jz, a, b));
         if (near < 9.5 || near > 24) continue; // keep the wide streets open
         if (rng(bi + 40) > 0.6) continue; // leave plenty of gaps
-        const h = 3.5 + rng(bi + 3) * 7;
+
+        // Height falloff: 1.0 at the centre of campus down to about 0.35 at
+        // the rim, so the outer ring no longer hides everything behind it.
+        const rim = Math.min(1, Math.hypot(jx, jz) / (SIZE * 1.05));
+        const falloff = 1 - 0.65 * rim * rim;
+        const h = (3.5 + rng(bi + 3) * 7.5) * falloff;
         const bw = 2.6 + rng(bi + 4) * 2.4;
         const bd = 2.6 + rng(bi + 5) * 2.4;
-        const tex = facades[bi % facades.length].clone();
-        tex.needsUpdate = true;
+
+        const tex = facades[bi % facades.length];
         const mat = new THREE.MeshStandardMaterial({
           map: tex,
           emissiveMap: tex,
           emissive: 0xffffff,
-          emissiveIntensity: 0.55,
+          emissiveIntensity: 0.5,
           roughness: 0.75,
           metalness: 0.1,
         });
         const bld = new THREE.Mesh(new THREE.BoxGeometry(bw, h, bd), mat);
         bld.position.set(jx, h / 2, jz);
+        // A few degrees off the grid. Perfectly aligned boxes are the single
+        // biggest giveaway that a city was generated by a loop.
+        bld.rotation.y = (rng(bi + 9) - 0.5) * 0.5;
         bld.castShadow = true;
         bld.receiveShadow = true;
         scene.add(bld);
-        const roof = new THREE.Mesh(
-          new THREE.BoxGeometry(bw * 0.5, 0.6, bd * 0.5),
-          postMat
-        );
-        roof.position.set(jx, h + 0.3, jz);
-        roof.castShadow = true;
-        scene.add(roof);
+
+        // Taller blocks get a setback storey; the rest just get a rooftop
+        // plant box. Two silhouettes instead of one.
+        if (h > 7.5) {
+          const setback = new THREE.Mesh(
+            new THREE.BoxGeometry(bw * 0.66, h * 0.28, bd * 0.66),
+            mat
+          );
+          setback.position.set(jx, h + h * 0.14, jz);
+          setback.rotation.y = bld.rotation.y;
+          setback.castShadow = true;
+          scene.add(setback);
+        } else {
+          const roof = new THREE.Mesh(
+            new THREE.BoxGeometry(bw * 0.5, 0.6, bd * 0.5),
+            roofMat
+          );
+          roof.position.set(jx, h + 0.3, jz);
+          roof.rotation.y = bld.rotation.y;
+          roof.castShadow = true;
+          scene.add(roof);
+        }
       }
     }
 
@@ -515,6 +871,7 @@ export default function MiniCity3D() {
       offsetTime: number;
     }
     const rigs: Rig[] = [];
+    const glowTex = radialTexture();
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a });
     const headMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -540,52 +897,89 @@ export default function MiniCity3D() {
 
       const g = new THREE.Group();
       const color = new THREE.Color(line.color);
+
+      /*
+       * A pool of light on the road under the bus, in the line's own colour.
+       *
+       * Without it the bus is a two-pixel speck somewhere among forty
+       * buildings - you have to hunt for the one moving thing on a screen
+       * called "live buses". The halo is what your eye lands on first, and it
+       * carries the line colour, so blue and green are told apart instantly
+       * without reading the legend.
+       */
+      const halo = new THREE.Mesh(
+        new THREE.PlaneGeometry(10.5, 10.5),
+        new THREE.MeshBasicMaterial({
+          map: glowTex,
+          color,
+          transparent: true,
+          // Kept well under full strength: at full brightness the glow washed
+          // straight over the bus, so the thing it was meant to point at
+          // turned into a coloured smudge.
+          opacity: 0.6,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          fog: false,
+        })
+      );
+      halo.rotation.x = -Math.PI / 2;
+      halo.position.y = 0.4;
+      g.add(halo);
+      // A real light too, so the tarmac and kerbs around the bus actually
+      // brighten as it passes rather than the glow being a flat sticker.
+      const beacon = new THREE.PointLight(color, 6, 13, 2);
+      beacon.position.set(0, 2.4, 0);
+      g.add(beacon);
+
+      // A bus is roughly 12 m long on a 7 m road; the old 4.2 x 2 box was
+      // nearly square, which is why it read as a car.
       const body = new THREE.Mesh(
-        new THREE.BoxGeometry(4.2, 1.5, 2),
+        new THREE.BoxGeometry(6.4, 1.6, 2.3),
         new THREE.MeshStandardMaterial({
           color,
           metalness: 0.3,
           roughness: 0.4,
         })
       );
-      body.position.y = 1.15;
+      body.position.y = 1.2;
       body.castShadow = true;
       g.add(body);
       const win = new THREE.Mesh(
-        new THREE.BoxGeometry(4.24, 0.6, 2.04),
+        new THREE.BoxGeometry(6.44, 0.7, 2.34),
         new THREE.MeshStandardMaterial({
           color: 0x0a1626,
           metalness: 0.6,
           roughness: 0.2,
-          emissive: 0x0a1626,
+          emissive: 0x9fd8ff,
+          emissiveIntensity: 0.35,
         })
       );
-      win.position.y = 1.55;
+      win.position.y = 1.62;
       g.add(win);
-      const sign = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 0.35, 2.02),
+      const roofSign = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6, 0.4, 2.32),
         new THREE.MeshStandardMaterial({
           color,
           emissive: color,
-          emissiveIntensity: 0.6,
+          emissiveIntensity: 1.4,
         })
       );
-      sign.position.set(1, 2.05, 0);
-      g.add(sign);
-      for (const wx of [-1.3, 1.3]) {
-        for (const wz of [-0.95, 0.95]) {
+      roofSign.position.set(1.4, 2.2, 0);
+      g.add(roofSign);
+      for (const wx of [-2.1, 2.1]) {
+        for (const wz of [-1.1, 1.1]) {
           const wheel = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.42, 0.42, 0.3, 12),
+            new THREE.CylinderGeometry(0.45, 0.45, 0.32, 12),
             wheelMat
           );
           wheel.rotation.x = Math.PI / 2;
-          wheel.position.set(wx, 0.42, wz);
+          wheel.position.set(wx, 0.45, wz);
           g.add(wheel);
         }
       }
-      for (const hz of [-0.6, 0.6]) {
-        const hl = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), headMat);
-        hl.position.set(2.1, 0.95, hz);
+      for (const hz of [-0.7, 0.7]) {
+        const hl = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), headMat);
+        hl.position.set(3.2, 1, hz);
         g.add(hl);
       }
       scene.add(g);
@@ -679,6 +1073,7 @@ export default function MiniCity3D() {
       camera.aspect = mount.clientWidth / mount.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(mount.clientWidth, mount.clientHeight);
+      if (!userTookOver) frameCampus();
     });
     ro.observe(mount);
 
