@@ -7,10 +7,10 @@
 A full-stack web app with a live **3D city view**, Dijkstra route optimization, cloud database, real-time sync, admin auth, and continuous deployment — the web companion to a C++ course project at Yunnan University. (Formerly "Smart Campus Bus Tracker" — same project, rebranded.)
 
 [![build](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![lighthouse-performance](https://img.shields.io/badge/lighthouse_performance-94-brightgreen)](#)
-[![lighthouse-accessibility](https://img.shields.io/badge/lighthouse_accessibility-97-brightgreen)](#)
+[![lighthouse-performance](https://img.shields.io/badge/lighthouse_performance-100-brightgreen)](#)
+[![lighthouse-accessibility](https://img.shields.io/badge/lighthouse_accessibility-100-brightgreen)](#)
 [![lighthouse-best--practices](https://img.shields.io/badge/lighthouse_best--practices-96-brightgreen)](#)
-[![lighthouse-seo](https://img.shields.io/badge/lighthouse_seo-92-brightgreen)](#)
+[![lighthouse-seo](https://img.shields.io/badge/lighthouse_seo-100-brightgreen)](#)
 [![PWA](https://img.shields.io/badge/PWA-installable-blue)](#)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)](#)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](#)
@@ -36,16 +36,75 @@ Everything is backed by a real cloud database with live sync across devices, gat
 | Campus stops · route edges | 12 · 10 |
 | App sections | 7 (Home · Live Map · Dashboard · 3D City · Ask AI · Driver · Live Editor) |
 | Bus lines simulated in real time | 2 (Z52, Z53) |
-| Route search | Dijkstra, computed client-side in **< 1 ms** |
+| Route search | Dijkstra, computed client-side in **< 1 ms**, and [proved to agree with the C++ implementation](#c-and-typescript-give-the-same-answer) on all 132 stop pairs |
 | Initial JS payload | **~132 KB gzipped**, split into app / React / Supabase vendor chunks so a code change doesn't invalidate the whole cache — the 3D scene is a separate lazy chunk (135 KB gzipped, loaded only when that tab opens) |
 | Imagery | route board optimised **4.7 MB → 282 KB** (−94%) |
 | Offline | full app shell + campus imagery precached (PWA, 15 entries) |
-| Tests | 233 unit tests, run on every push by GitHub Actions |
+| Tests | 501 unit tests, run on every push by GitHub Actions |
 | Accessibility | skip link, landmarks, `aria-pressed`/`aria-current`, live regions, reduced-motion, `<html lang>` follows the toggle |
 | Languages | English + 中文, full UI toggle |
 | Data safety | admin can export/import a full JSON backup — works with zero network |
 
-*Lighthouse scores measured with the Lighthouse CLI against the production build (`npm run build && npm run preview`); real-world scores vary with network and device.*
+### Lighthouse
+
+Measured with Lighthouse CLI 13.4.1 against the production build
+(`npm run build && npm run preview`), headless Chromium:
+
+| | Performance | Accessibility | Best practices | SEO |
+|---|---|---|---|---|
+| **Desktop preset** | 100 | 100 | 96 | 100 |
+| **Mobile preset** | 83 | 100 | 96 | 100 |
+
+The badges above quote the desktop run. Mobile performance is lower because
+Lighthouse's mobile preset simulates a slow CPU and network on purpose; that is
+the number worth watching, not the desktop one.
+
+Two honest notes on these figures:
+
+- **Best practices is held at 96 by one audit — "browser errors were logged to
+  the console" — and every one of those errors is `ERR_TUNNEL_CONNECTION_FAILED`
+  from the sandbox the measurement ran in**, which blocks Google Fonts, Supabase
+  and Open-Meteo. It is a property of the measuring environment, not of the app.
+  Re-run it on a normal connection and that audit should pass; it has not been
+  re-run, so 96 is what is claimed here.
+- SEO was 92 until this run. The cause was real: there was no `robots.txt`, so
+  Netlify's single-page-app fallback answered `/robots.txt` with `index.html`
+  and a crawler read `<!doctype html>` as a robots rule — 46 syntax errors.
+  Adding `public/robots.txt` and a one-entry `sitemap.xml` fixed it.
+
+## C++ and TypeScript give the same answer
+
+The obvious claim about this project — *same algorithm, different language* — is
+the kind that usually gets asserted and never checked. It is checked here, and
+the check runs on every push.
+
+Two details are what make it mean something:
+
+- **The two repositories ship different data.** The C++ project's data files are
+  placeholders (Main Gate, Library, Cafeteria — six stops); this app carries the
+  real Z52/Z53 route board with twelve. Running each on its own data would
+  compare the data, not the algorithms. So the fixture is *this app's graph*,
+  exported into the C++ pipe-delimited format and fed to the C++ program.
+- **The C++ side is the real thing.** A harness links the course project's own
+  classes and calls its own `CampusTransportSystem::findShortestRoute` for every
+  ordered stop pair, capturing what it actually prints. Nothing was
+  reimplemented or transcribed by hand.
+
+Both implementations are then compared on **the full path, not just the total** —
+two different routes can share a cost and still mean the two disagree about
+which way to go.
+
+| | Pairs compared | Result |
+|---|---|---|
+| Plain graph | 132 | identical path and total |
+| With emergency delays on 3 routes | 132 | identical path and total |
+
+The delayed run exists because of a mutation that got away. Deleting
+`delayMinutes` from the TypeScript edge weight left all 132 plain pairs still
+passing — not because the test was weak, but because every route in the campus
+data has a delay of zero, so the two weight rules are identical on that graph.
+With delays applied, that same mutation fails 37 comparisons. Treating the
+directed route graph as undirected fails 47.
 
 ## 🔍 What is real, what is simulated, what is unproven
 

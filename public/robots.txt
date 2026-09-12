@@ -1,0 +1,7 @@
+# Without this file Netlify's single-page-app fallback answers /robots.txt with
+# index.html, and a crawler reads "<!doctype html>" as a robots rule. Lighthouse
+# reported 46 syntax errors for exactly that reason.
+User-agent: *
+Allow: /
+
+Sitemap: https://ynu-bus-tracker.netlify.app/sitemap.xml

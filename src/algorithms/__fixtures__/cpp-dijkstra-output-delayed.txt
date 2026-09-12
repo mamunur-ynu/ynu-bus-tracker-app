@@ -1,0 +1,493 @@
+# Same graph as cpp-dijkstra-output.txt, but with emergency delays applied to
+# three routes - the feature the app exposes as "apply a delay and watch the
+# path re-route". It exists because with no delays anywhere, an implementation
+# that ignored delayMinutes entirely would still match on every pair; a
+# mutation test proved exactly that gap.
+#
+# Delays applied (routeId -> minutes): 1 -> 8, 4 -> 5, 7 -> 6
+# Regenerate the same way as the other fixture, with those delays in routes.txt.
+Load finished. Stops: 12, Buses: 0, Routes: 10, Schedules: 0, Queues: 0.
+PAIR 1 2
+Shortest route from YNU East Gate to YNU North Gate:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate)
+  Total travel time: 40 min
+ENDPAIR
+PAIR 1 3
+No path found from YNU East Gate to YNU South Gate.
+ENDPAIR
+PAIR 1 4
+Shortest route from YNU East Gate to YNU West Gate:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 46 min
+ENDPAIR
+PAIR 1 5
+Shortest route from YNU East Gate to Zehu Lake:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake)
+  Total travel time: 30 min
+ENDPAIR
+PAIR 1 6
+Shortest route from YNU East Gate to YNU Library:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library)
+  Total travel time: 24 min
+ENDPAIR
+PAIR 1 7
+Shortest route from YNU East Gate to Lixing Building:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building)
+  Total travel time: 14 min
+ENDPAIR
+PAIR 1 8
+Shortest route from YNU East Gate to School Hospital:
+  1 (YNU East Gate) -> 8 (School Hospital)
+  Total travel time: 11 min
+ENDPAIR
+PAIR 1 9
+Shortest route from YNU East Gate to Engineering College:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 9 (Engineering College)
+  Total travel time: 35 min
+ENDPAIR
+PAIR 1 10
+No path found from YNU East Gate to Student Dormitory Area.
+ENDPAIR
+PAIR 1 11
+Shortest route from YNU East Gate to Yuweitang:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang)
+  Total travel time: 27 min
+ENDPAIR
+PAIR 1 12
+Shortest route from YNU East Gate to Gewu Building:
+  1 (YNU East Gate) -> 8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building)
+  Total travel time: 16 min
+ENDPAIR
+PAIR 2 1
+No path found from YNU North Gate to YNU East Gate.
+ENDPAIR
+PAIR 2 3
+No path found from YNU North Gate to YNU South Gate.
+ENDPAIR
+PAIR 2 4
+Shortest route from YNU North Gate to YNU West Gate:
+  2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 6 min
+ENDPAIR
+PAIR 2 5
+No path found from YNU North Gate to Zehu Lake.
+ENDPAIR
+PAIR 2 6
+No path found from YNU North Gate to YNU Library.
+ENDPAIR
+PAIR 2 7
+No path found from YNU North Gate to Lixing Building.
+ENDPAIR
+PAIR 2 8
+No path found from YNU North Gate to School Hospital.
+ENDPAIR
+PAIR 2 9
+Shortest route from YNU North Gate to Engineering College:
+  2 (YNU North Gate) -> 9 (Engineering College)
+  Total travel time: 5 min
+ENDPAIR
+PAIR 2 10
+No path found from YNU North Gate to Student Dormitory Area.
+ENDPAIR
+PAIR 2 11
+No path found from YNU North Gate to Yuweitang.
+ENDPAIR
+PAIR 2 12
+No path found from YNU North Gate to Gewu Building.
+ENDPAIR
+PAIR 3 1
+No path found from YNU South Gate to YNU East Gate.
+ENDPAIR
+PAIR 3 2
+No path found from YNU South Gate to YNU North Gate.
+ENDPAIR
+PAIR 3 4
+No path found from YNU South Gate to YNU West Gate.
+ENDPAIR
+PAIR 3 5
+No path found from YNU South Gate to Zehu Lake.
+ENDPAIR
+PAIR 3 6
+No path found from YNU South Gate to YNU Library.
+ENDPAIR
+PAIR 3 7
+No path found from YNU South Gate to Lixing Building.
+ENDPAIR
+PAIR 3 8
+No path found from YNU South Gate to School Hospital.
+ENDPAIR
+PAIR 3 9
+No path found from YNU South Gate to Engineering College.
+ENDPAIR
+PAIR 3 10
+No path found from YNU South Gate to Student Dormitory Area.
+ENDPAIR
+PAIR 3 11
+No path found from YNU South Gate to Yuweitang.
+ENDPAIR
+PAIR 3 12
+No path found from YNU South Gate to Gewu Building.
+ENDPAIR
+PAIR 4 1
+No path found from YNU West Gate to YNU East Gate.
+ENDPAIR
+PAIR 4 2
+No path found from YNU West Gate to YNU North Gate.
+ENDPAIR
+PAIR 4 3
+No path found from YNU West Gate to YNU South Gate.
+ENDPAIR
+PAIR 4 5
+No path found from YNU West Gate to Zehu Lake.
+ENDPAIR
+PAIR 4 6
+No path found from YNU West Gate to YNU Library.
+ENDPAIR
+PAIR 4 7
+No path found from YNU West Gate to Lixing Building.
+ENDPAIR
+PAIR 4 8
+No path found from YNU West Gate to School Hospital.
+ENDPAIR
+PAIR 4 9
+No path found from YNU West Gate to Engineering College.
+ENDPAIR
+PAIR 4 10
+No path found from YNU West Gate to Student Dormitory Area.
+ENDPAIR
+PAIR 4 11
+No path found from YNU West Gate to Yuweitang.
+ENDPAIR
+PAIR 4 12
+No path found from YNU West Gate to Gewu Building.
+ENDPAIR
+PAIR 5 1
+No path found from Zehu Lake to YNU East Gate.
+ENDPAIR
+PAIR 5 2
+Shortest route from Zehu Lake to YNU North Gate:
+  5 (Zehu Lake) -> 2 (YNU North Gate)
+  Total travel time: 10 min
+ENDPAIR
+PAIR 5 3
+No path found from Zehu Lake to YNU South Gate.
+ENDPAIR
+PAIR 5 4
+Shortest route from Zehu Lake to YNU West Gate:
+  5 (Zehu Lake) -> 2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 16 min
+ENDPAIR
+PAIR 5 6
+No path found from Zehu Lake to YNU Library.
+ENDPAIR
+PAIR 5 7
+No path found from Zehu Lake to Lixing Building.
+ENDPAIR
+PAIR 5 8
+No path found from Zehu Lake to School Hospital.
+ENDPAIR
+PAIR 5 9
+Shortest route from Zehu Lake to Engineering College:
+  5 (Zehu Lake) -> 2 (YNU North Gate) -> 9 (Engineering College)
+  Total travel time: 15 min
+ENDPAIR
+PAIR 5 10
+No path found from Zehu Lake to Student Dormitory Area.
+ENDPAIR
+PAIR 5 11
+No path found from Zehu Lake to Yuweitang.
+ENDPAIR
+PAIR 5 12
+No path found from Zehu Lake to Gewu Building.
+ENDPAIR
+PAIR 6 1
+No path found from YNU Library to YNU East Gate.
+ENDPAIR
+PAIR 6 2
+Shortest route from YNU Library to YNU North Gate:
+  6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate)
+  Total travel time: 16 min
+ENDPAIR
+PAIR 6 3
+No path found from YNU Library to YNU South Gate.
+ENDPAIR
+PAIR 6 4
+Shortest route from YNU Library to YNU West Gate:
+  6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 22 min
+ENDPAIR
+PAIR 6 5
+Shortest route from YNU Library to Zehu Lake:
+  6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake)
+  Total travel time: 6 min
+ENDPAIR
+PAIR 6 7
+No path found from YNU Library to Lixing Building.
+ENDPAIR
+PAIR 6 8
+No path found from YNU Library to School Hospital.
+ENDPAIR
+PAIR 6 9
+Shortest route from YNU Library to Engineering College:
+  6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 9 (Engineering College)
+  Total travel time: 21 min
+ENDPAIR
+PAIR 6 10
+No path found from YNU Library to Student Dormitory Area.
+ENDPAIR
+PAIR 6 11
+Shortest route from YNU Library to Yuweitang:
+  6 (YNU Library) -> 11 (Yuweitang)
+  Total travel time: 3 min
+ENDPAIR
+PAIR 6 12
+No path found from YNU Library to Gewu Building.
+ENDPAIR
+PAIR 7 1
+No path found from Lixing Building to YNU East Gate.
+ENDPAIR
+PAIR 7 2
+Shortest route from Lixing Building to YNU North Gate:
+  7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate)
+  Total travel time: 26 min
+ENDPAIR
+PAIR 7 3
+No path found from Lixing Building to YNU South Gate.
+ENDPAIR
+PAIR 7 4
+Shortest route from Lixing Building to YNU West Gate:
+  7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 32 min
+ENDPAIR
+PAIR 7 5
+Shortest route from Lixing Building to Zehu Lake:
+  7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake)
+  Total travel time: 16 min
+ENDPAIR
+PAIR 7 6
+Shortest route from Lixing Building to YNU Library:
+  7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library)
+  Total travel time: 10 min
+ENDPAIR
+PAIR 7 8
+No path found from Lixing Building to School Hospital.
+ENDPAIR
+PAIR 7 9
+Shortest route from Lixing Building to Engineering College:
+  7 (Lixing Building) -> 12 (Gewu Building) -> 9 (Engineering College)
+  Total travel time: 21 min
+ENDPAIR
+PAIR 7 10
+No path found from Lixing Building to Student Dormitory Area.
+ENDPAIR
+PAIR 7 11
+Shortest route from Lixing Building to Yuweitang:
+  7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang)
+  Total travel time: 13 min
+ENDPAIR
+PAIR 7 12
+Shortest route from Lixing Building to Gewu Building:
+  7 (Lixing Building) -> 12 (Gewu Building)
+  Total travel time: 2 min
+ENDPAIR
+PAIR 8 1
+No path found from School Hospital to YNU East Gate.
+ENDPAIR
+PAIR 8 2
+Shortest route from School Hospital to YNU North Gate:
+  8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate)
+  Total travel time: 29 min
+ENDPAIR
+PAIR 8 3
+No path found from School Hospital to YNU South Gate.
+ENDPAIR
+PAIR 8 4
+Shortest route from School Hospital to YNU West Gate:
+  8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 35 min
+ENDPAIR
+PAIR 8 5
+Shortest route from School Hospital to Zehu Lake:
+  8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake)
+  Total travel time: 19 min
+ENDPAIR
+PAIR 8 6
+Shortest route from School Hospital to YNU Library:
+  8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library)
+  Total travel time: 13 min
+ENDPAIR
+PAIR 8 7
+Shortest route from School Hospital to Lixing Building:
+  8 (School Hospital) -> 7 (Lixing Building)
+  Total travel time: 3 min
+ENDPAIR
+PAIR 8 9
+Shortest route from School Hospital to Engineering College:
+  8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 9 (Engineering College)
+  Total travel time: 24 min
+ENDPAIR
+PAIR 8 10
+No path found from School Hospital to Student Dormitory Area.
+ENDPAIR
+PAIR 8 11
+Shortest route from School Hospital to Yuweitang:
+  8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang)
+  Total travel time: 16 min
+ENDPAIR
+PAIR 8 12
+Shortest route from School Hospital to Gewu Building:
+  8 (School Hospital) -> 7 (Lixing Building) -> 12 (Gewu Building)
+  Total travel time: 5 min
+ENDPAIR
+PAIR 9 1
+No path found from Engineering College to YNU East Gate.
+ENDPAIR
+PAIR 9 2
+No path found from Engineering College to YNU North Gate.
+ENDPAIR
+PAIR 9 3
+No path found from Engineering College to YNU South Gate.
+ENDPAIR
+PAIR 9 4
+No path found from Engineering College to YNU West Gate.
+ENDPAIR
+PAIR 9 5
+No path found from Engineering College to Zehu Lake.
+ENDPAIR
+PAIR 9 6
+No path found from Engineering College to YNU Library.
+ENDPAIR
+PAIR 9 7
+No path found from Engineering College to Lixing Building.
+ENDPAIR
+PAIR 9 8
+No path found from Engineering College to School Hospital.
+ENDPAIR
+PAIR 9 10
+No path found from Engineering College to Student Dormitory Area.
+ENDPAIR
+PAIR 9 11
+No path found from Engineering College to Yuweitang.
+ENDPAIR
+PAIR 9 12
+No path found from Engineering College to Gewu Building.
+ENDPAIR
+PAIR 10 1
+No path found from Student Dormitory Area to YNU East Gate.
+ENDPAIR
+PAIR 10 2
+No path found from Student Dormitory Area to YNU North Gate.
+ENDPAIR
+PAIR 10 3
+No path found from Student Dormitory Area to YNU South Gate.
+ENDPAIR
+PAIR 10 4
+No path found from Student Dormitory Area to YNU West Gate.
+ENDPAIR
+PAIR 10 5
+No path found from Student Dormitory Area to Zehu Lake.
+ENDPAIR
+PAIR 10 6
+No path found from Student Dormitory Area to YNU Library.
+ENDPAIR
+PAIR 10 7
+No path found from Student Dormitory Area to Lixing Building.
+ENDPAIR
+PAIR 10 8
+No path found from Student Dormitory Area to School Hospital.
+ENDPAIR
+PAIR 10 9
+No path found from Student Dormitory Area to Engineering College.
+ENDPAIR
+PAIR 10 11
+No path found from Student Dormitory Area to Yuweitang.
+ENDPAIR
+PAIR 10 12
+No path found from Student Dormitory Area to Gewu Building.
+ENDPAIR
+PAIR 11 1
+No path found from Yuweitang to YNU East Gate.
+ENDPAIR
+PAIR 11 2
+Shortest route from Yuweitang to YNU North Gate:
+  11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate)
+  Total travel time: 13 min
+ENDPAIR
+PAIR 11 3
+No path found from Yuweitang to YNU South Gate.
+ENDPAIR
+PAIR 11 4
+Shortest route from Yuweitang to YNU West Gate:
+  11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 19 min
+ENDPAIR
+PAIR 11 5
+Shortest route from Yuweitang to Zehu Lake:
+  11 (Yuweitang) -> 5 (Zehu Lake)
+  Total travel time: 3 min
+ENDPAIR
+PAIR 11 6
+No path found from Yuweitang to YNU Library.
+ENDPAIR
+PAIR 11 7
+No path found from Yuweitang to Lixing Building.
+ENDPAIR
+PAIR 11 8
+No path found from Yuweitang to School Hospital.
+ENDPAIR
+PAIR 11 9
+Shortest route from Yuweitang to Engineering College:
+  11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 9 (Engineering College)
+  Total travel time: 18 min
+ENDPAIR
+PAIR 11 10
+No path found from Yuweitang to Student Dormitory Area.
+ENDPAIR
+PAIR 11 12
+No path found from Yuweitang to Gewu Building.
+ENDPAIR
+PAIR 12 1
+No path found from Gewu Building to YNU East Gate.
+ENDPAIR
+PAIR 12 2
+Shortest route from Gewu Building to YNU North Gate:
+  12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate)
+  Total travel time: 24 min
+ENDPAIR
+PAIR 12 3
+No path found from Gewu Building to YNU South Gate.
+ENDPAIR
+PAIR 12 4
+Shortest route from Gewu Building to YNU West Gate:
+  12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake) -> 2 (YNU North Gate) -> 4 (YNU West Gate)
+  Total travel time: 30 min
+ENDPAIR
+PAIR 12 5
+Shortest route from Gewu Building to Zehu Lake:
+  12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang) -> 5 (Zehu Lake)
+  Total travel time: 14 min
+ENDPAIR
+PAIR 12 6
+Shortest route from Gewu Building to YNU Library:
+  12 (Gewu Building) -> 6 (YNU Library)
+  Total travel time: 8 min
+ENDPAIR
+PAIR 12 7
+No path found from Gewu Building to Lixing Building.
+ENDPAIR
+PAIR 12 8
+No path found from Gewu Building to School Hospital.
+ENDPAIR
+PAIR 12 9
+Shortest route from Gewu Building to Engineering College:
+  12 (Gewu Building) -> 9 (Engineering College)
+  Total travel time: 19 min
+ENDPAIR
+PAIR 12 10
+No path found from Gewu Building to Student Dormitory Area.
+ENDPAIR
+PAIR 12 11
+Shortest route from Gewu Building to Yuweitang:
+  12 (Gewu Building) -> 6 (YNU Library) -> 11 (Yuweitang)
+  Total travel time: 11 min
+ENDPAIR
